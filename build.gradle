@@ -18,7 +18,7 @@ dependencies {
     compile 'eviware:soapui:4.5.1'
     compileOnly 'log4j:log4j:1.2.17'
     compile 'com.epam.reportportal:client-java-core:2.5.1'
-    compile 'com.epam.reportportal:logger-java-log4j:2.6.0'
+    compile 'com.epam.reportportal:logger-java-log4j:2.6.1'
 }
 
 task zip(type: Zip, overwrite: true) {
