@@ -24,6 +24,7 @@ import java.util.Calendar;
 import java.util.Properties;
 import java.util.Set;
 
+import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,12 +75,14 @@ public class SoapUIService implements ISoapUIService {
 
 	private Set<String> tags;
 	private Mode mode;
+	private String description;
 
 	@Inject
 	public SoapUIService(ListenerParameters parameters) {
 		logger.debug(parameters.toString());
 		tags = parameters.getTags();
 		mode = parameters.getMode();
+		description = parameters.getDescription();
 	}
 
 	/**
@@ -95,6 +98,7 @@ public class SoapUIService implements ISoapUIService {
 		soapUIContext.setLaunchName(properties.getProperty(ListenerProperty.LAUNCH_NAME.getPropertyName()));
 		this.tags = TagsParser.parseAsSet(properties.getProperty(ListenerProperty.LAUNCH_TAGS.getPropertyName()));
 		this.mode = ListenersUtils.getLaunchMode(properties.getProperty(ListenerProperty.MODE.getPropertyName()));
+		this.description = properties.getProperty(ListenerProperty.DESCRIPTION.getPropertyName());
 		this.serviceClient = SoapUIInjectorProvider.getInstance()
 				.getBean(Key.get(IReportPortalService.class, Names.named("soapClientService")));
 	}
@@ -106,6 +110,9 @@ public class SoapUIService implements ISoapUIService {
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setTags(tags);
 		rq.setMode(mode);
+		if (!Strings.isNullOrEmpty(description)) {
+			rq.setDescription(description);
+		}
 		EntryCreatedRS rs = null;
 		try {
 			rs = serviceClient.startLaunch(rq);
