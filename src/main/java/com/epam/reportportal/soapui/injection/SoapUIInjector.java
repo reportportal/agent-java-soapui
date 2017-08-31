@@ -21,27 +21,25 @@
 package com.epam.reportportal.soapui.injection;
 
 import com.epam.reportportal.guice.Injector;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
+import com.epam.reportportal.guice.ReportPortalClientModule;
+import com.eviware.soapui.model.TestPropertyHolder;
+import rp.com.google.inject.util.Modules;
 
 /**
  * Provide soapui client oriented guice injector. Provided injector is a child
  * injector of rp client injector with soapui's specific modules.
- * 
+ *
  * @author Aliaksei_Makayed
+ * @author Andrei Varabyeu
  */
-public class SoapUIInjectorProvider {
+public final class SoapUIInjector {
 
-	private static Supplier<Injector> instance = Suppliers.memoize(new Supplier<Injector>() {
+	private SoapUIInjector() {
+		//no need to create new injector
+	}
 
-		@Override
-		public Injector get() {
-			return Injector.getInstance().getChildInjector(new SoapUIListenersModule());
-		}
-	});
-
-	public static Injector getInstance() {
-		return instance.get();
+	public static Injector newOne(TestPropertyHolder contextProperties) {
+		return Injector.create(Modules.combine(new SoapUIListenersModule(contextProperties), new ReportPortalClientModule()));
 	}
 
 }

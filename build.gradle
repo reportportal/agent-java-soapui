@@ -1,7 +1,9 @@
 plugins {
     id 'net.researchgate.release' version '2.4.1'
     id "com.jfrog.bintray" version "1.7"
+    id 'com.github.johnrengelman.shadow' version '2.0.1'
 }
+
 apply plugin: 'java'
 apply from: 'release.gradle'
 apply from: 'quality.gradle'
@@ -15,19 +17,25 @@ repositories {
 }
 
 dependencies {
-    compile 'eviware:soapui:4.5.1'
+    compileOnly 'eviware:soapui:4.5.1'
     compileOnly 'log4j:log4j:1.2.17'
-    compile 'com.epam.reportportal:client-java-core:2.5.1'
-    compile 'com.epam.reportportal:logger-java-log4j:2.6.0'
+    compile 'com.epam.reportportal:client-java:3.0.9'
+    compile 'com.epam.reportportal:logger-java-log4j:3.0.2'
+}
+
+shadowJar {
+    dependencies {
+        exclude(dependency('eviware:soapui'))
+    }
 }
 
 task zip(type: Zip, overwrite: true) {
     def path = "${project.projectDir}/src/main/resources/"
     classifier = '-full'
-    from jar.outputs.files
-    into('/libs') {
-        from configurations.compile
-    }
+    from shadowJar.outputs.files
+//    into('/libs') {
+//        from configurations.compile
+//    }
     from(path, {
         include 'soapui-log4j.xml'
         into('/bin')

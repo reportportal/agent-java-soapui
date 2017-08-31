@@ -20,42 +20,42 @@
  */
 package com.epam.reportportal.soapui.listeners;
 
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.epam.reportportal.soapui.service.SoapUIService;
+import com.epam.reportportal.soapui.service.SoapUIServiceImpl;
+import com.epam.ta.reportportal.log4j.appender.ReportPortalAppender;
+import com.eviware.soapui.SoapUI;
+import com.eviware.soapui.model.testsuite.*;
 import org.apache.log4j.SimpleLayout;
 
-import com.epam.reportportal.service.IReportPortalService;
-import com.epam.reportportal.utils.properties.SoapUIPropertiesHolder;
-import com.epam.ta.reportportal.log4j.appender.ReportPortalAppender;
-import com.epam.reportportal.soapui.injection.SoapUIInjectorProvider;
-import com.epam.reportportal.soapui.service.ISoapUIService;
-import com.eviware.soapui.model.testsuite.*;
+import java.util.Enumeration;
 
 /**
  * Report portal related implementation of {@link ProjectRunListener}. This
  * listener should be used only with {@link RPTestSuiteRunListener} and
  * {@link RPTestRunListener}.
- * 
- * @author Raman_Usik
  *
+ * @author Raman_Usik
  */
 public class RPProjectRunListener implements ProjectRunListener {
 
 	public static final String APPENDER_NAME = "ReportPortalAppender";
 	public static final String BASE_APPENDER_NAME = "REPORTPORTAL";
+	static final String RP_SERVICE = "rp_service";
 
-	private ISoapUIService service;
+	private SoapUIService service;
 
 	@Override
-	public void beforeRun(ProjectRunner paramProjectRunner, ProjectRunContext paramProjectRunContext) {
-		prepare(paramProjectRunContext);
-		service.reinitService();
-		// appender should use the same end point service as listener otherwise
-		// properties mismatch is possible
-		defineLogger(service.getServiceClient());
+	public void beforeRun(ProjectRunner runner, ProjectRunContext context) {
+		try {
+			service = new SoapUIServiceImpl(context.getProject());
+			defineLogger();
+		} catch (Throwable t) {
+			SoapUI.log("ReportPortal plugin cannot be initialized. " + t.getMessage());
+			service = SoapUIService.NOP_SERVICE;
+		}
 		service.startLaunch();
+		context.setProperty(RP_SERVICE, service);
+
 	}
 
 	@Override
@@ -75,55 +75,35 @@ public class RPProjectRunListener implements ProjectRunListener {
 	}
 
 	/**
-	 * Prepare soapui service for running:
-	 * <li>load soap ui properties
-	 * <li>instantiate soapui service
-	 * 
-	 * @param paramProjectRunContext
-	 */
-	private void prepare(ProjectRunContext paramProjectRunContext) {
-		SoapUIPropertiesHolder.setSoapUIProperties(convertProperties(paramProjectRunContext.getProject().getProperties()));
-		service = SoapUIInjectorProvider.getInstance().getBean(ISoapUIService.class);
-	}
-
-	private Map<String, String> convertProperties(Map<String, TestProperty> params) {
-		Map<String, String> properties = new HashMap<String, String>();
-		for (String key : params.keySet()) {
-			properties.put(key, params.get(key).getValue());
-		}
-		return properties;
-	}
-
-	/**
 	 * Instantiate, initialize report portal log4j appender and add it to all
 	 * groovy.log logger.
-	 * 
-	 * @param junitStyleService
 	 */
-	private void defineLogger(IReportPortalService junitStyleService) {
+	private void defineLogger() {
 		@SuppressWarnings("rawtypes")
-		Enumeration loggers = org.apache.log4j.Logger.getRootLogger().getLoggerRepository().getCurrentLoggers();
-		// SoapUILogAppender soapUIAppender = new SoapUILogAppender();
+
 		ReportPortalAppender soapUIAppender = new ReportPortalAppender();
-		// soapUIAppender.init(junitStyleService);
 		soapUIAppender.setName(APPENDER_NAME);
 		soapUIAppender.setLayout(new SimpleLayout());
+		Enumeration loggers = org.apache.log4j.Logger.getRootLogger().getLoggerRepository().getCurrentLoggers();
+
 		while (loggers.hasMoreElements()) {
 			org.apache.log4j.Logger logger = (org.apache.log4j.Logger) loggers.nextElement();
 			if (logger.getAppender(BASE_APPENDER_NAME) != null) {
 				/*
-				 * Report portal soapui log4j appender compatible only with
-				 * groovy.log appender because this logger used for logging user
-				 * logs from groovy scripts. Using soapui log4j appender with
-				 * other appender unsafe because they may be not synchronized
-				 * with listener(logs can be logged to report portal only if
-				 * appender started test step)
-				 */
+                * Report portal soapui log4j appender compatible only with
+        		* groovy.log appender because this logger used for logging user
+        		* logs from groovy scripts. Using soapui log4j appender with
+        		* other appender unsafe because they may be not synchronized
+        		* with listener(logs can be logged to report portal only if
+        		* appender started test step)
+        		*/
 				logger.removeAppender(BASE_APPENDER_NAME);
+
 				if (logger.getName().equals("groovy.log")) {
 					logger.addAppender(soapUIAppender);
 				}
 			}
 		}
+
 	}
 }
