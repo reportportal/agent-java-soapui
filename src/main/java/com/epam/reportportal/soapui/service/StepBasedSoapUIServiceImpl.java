@@ -23,54 +23,55 @@ package com.epam.reportportal.soapui.service;
 import com.epam.reportportal.listeners.ListenerParameters;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.reportportal.service.ReportPortalClient;
-import com.epam.reportportal.soapui.injection.SoapUIInjector;
 import com.epam.reportportal.soapui.parameters.TestItemType;
 import com.epam.reportportal.soapui.parameters.TestStatus;
 import com.epam.reportportal.soapui.parameters.TestStepType;
+import com.epam.reportportal.soapui.results.ResultLogger;
 import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
-import com.eviware.soapui.SoapUI;
-import com.eviware.soapui.model.TestPropertyHolder;
+import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
+import com.eviware.soapui.model.propertyexpansion.PropertyExpansionContext;
 import com.eviware.soapui.model.testsuite.*;
 import com.eviware.soapui.model.testsuite.TestRunner.Status;
 import com.eviware.soapui.model.testsuite.TestStepResult.TestStepStatus;
 import io.reactivex.Maybe;
+import rp.com.google.common.base.Function;
 import rp.com.google.common.base.StandardSystemProperty;
 import rp.com.google.common.base.Strings;
 import rp.com.google.inject.Inject;
+import rp.com.google.inject.name.Named;
 
+import javax.annotation.Nullable;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Calendar;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Default implementation of {@link SoapUIServiceImpl}
+ * Default implementation of {@link StepBasedSoapUIServiceImpl}
  *
- * @author Raman_Usik
+ * @author Andrei Varabyeu
  */
-public class SoapUIServiceImpl implements SoapUIService {
+public class StepBasedSoapUIServiceImpl implements SoapUIService {
 
 	private static final String LINE_SEPARATOR = StandardSystemProperty.LINE_SEPARATOR.value();
 	private static final Map<String, Maybe<String>> ITEMS = new ConcurrentHashMap<String, Maybe<String>>();
-	private static final String ID = "rp_id";
+	public static final String ID = "rp_id";
 
 	@Inject
-	private SoapUIContext context;
+	protected SoapUIContext context;
 	@Inject
-	private ListenerParameters parameters;
+	protected ListenerParameters parameters;
 	@Inject
-	private ReportPortalClient client;
+	protected ReportPortalClient client;
+
+	@Inject
+	@Named("resultLoggers")
+	protected List<ResultLogger<?>> resultLoggers;
 
 	private ReportPortal reportPortal;
-
-	public SoapUIServiceImpl(TestPropertyHolder propertyHolder) {
-		SoapUIInjector.newOne(propertyHolder).injectMembers(this);
-	}
 
 	public void startLaunch() {
 		StartLaunchRQ rq = new StartLaunchRQ();
@@ -119,13 +120,17 @@ public class SoapUIServiceImpl implements SoapUIService {
 
 	}
 
-	public void startTestCase(TestCase testCase) {
-		StartTestItemRQ rq = new StartTestItemRQ();
-		rq.setName(testCase.getName());
-		rq.setStartTime(Calendar.getInstance().getTime());
-		rq.setType(TestItemType.TEST_CASE.getValue());
+	public void startTestCase(TestCase testCase, PropertyExpansionContext propertyContext) {
+		Maybe<String> id = startItem(testCase.getName(), TestItemType.TEST_CASE,
+				fromStringId(testCase.getTestSuite().getPropertyValue(ID)));
+		testCase.setPropertyValue(ID, toStringId(id));
+	}
 
-		final Maybe<String> parentId = fromStringId(testCase.getTestSuite().getPropertyValue(ID));
+	protected Maybe<String> startItem(String name, TestItemType type, Maybe<String> parentId) {
+		StartTestItemRQ rq = new StartTestItemRQ();
+		rq.setName(name);
+		rq.setStartTime(Calendar.getInstance().getTime());
+		rq.setType(type.getValue());
 
 		Maybe<String> id;
 		if (null == parentId) {
@@ -134,11 +139,10 @@ public class SoapUIServiceImpl implements SoapUIService {
 			id = reportPortal.startTestItem(parentId, rq);
 		}
 
-		testCase.setPropertyValue(ID, toStringId(id));
-
+		return id;
 	}
 
-	public void finishTestCase(TestCaseRunner testCaseContext) {
+	public void finishTestCase(TestCaseRunner testCaseContext, PropertyExpansionContext propertyContext) {
 		FinishTestItemRQ rq = new FinishTestItemRQ();
 		rq.setEndTime(Calendar.getInstance().getTime());
 		rq.setStatus(TestStatus.fromSoapUI(testCaseContext.getStatus()));
@@ -162,18 +166,22 @@ public class SoapUIServiceImpl implements SoapUIService {
 	public void finishTestStep(TestStepResult testStepContext, TestCaseRunContext paramTestCaseRunContext) {
 		Maybe<String> testId = (Maybe<String>) paramTestCaseRunContext.getProperty(ID);
 
-		final StringWriter logData = new StringWriter();
-		PrintWriter logWriter = new PrintWriter(logData);
-		testStepContext.writeTo(logWriter);
-
-		final String logString = logData.toString();
-		if (!Strings.isNullOrEmpty(logString)) {
-			ReportPortal.emitLog(logString, "INFO", Calendar.getInstance().getTime());
-
+		String logStepData = getLogStepData(testStepContext);
+		if (!Strings.isNullOrEmpty(logStepData)) {
+			ReportPortal.emitLog(logStepData, "INFO", Calendar.getInstance().getTime());
+		}
+		for (final SaveLogRQ rq : getStepLogReport(testStepContext)) {
+			ReportPortal.emitLog(new Function<String, SaveLogRQ>() {
+				@Override
+				public SaveLogRQ apply(@Nullable String id) {
+					rq.setTestItemId(id);
+					return rq;
+				}
+			});
 		}
 
 		if (TestStepStatus.FAILED.equals(testStepContext.getStatus())) {
-			logStepError(testStepContext);
+			ReportPortal.emitLog(getStepError(testStepContext), "ERROR", Calendar.getInstance().getTime());
 		}
 
 		FinishTestItemRQ rq = new FinishTestItemRQ();
@@ -187,7 +195,24 @@ public class SoapUIServiceImpl implements SoapUIService {
 
 	}
 
-	private void logStepError(TestStepResult testStepContext) {
+	protected String getLogStepData(TestStepResult testStepContext) {
+		final StringWriter logData = new StringWriter();
+		PrintWriter logWriter = new PrintWriter(logData);
+		testStepContext.writeTo(logWriter);
+		return logData.toString();
+	}
+
+	protected List<SaveLogRQ> getStepLogReport(TestStepResult testStepContext) {
+		List<SaveLogRQ> rqs = new ArrayList<SaveLogRQ>();
+		for (ResultLogger<?> resultLogger : resultLoggers) {
+			if (resultLogger.supports(testStepContext)) {
+				rqs.addAll(resultLogger.buildLogs(testStepContext));
+			}
+		}
+		return rqs;
+	}
+
+	protected String getStepError(TestStepResult testStepContext) {
 
 		String message;
 		if (testStepContext.getError() != null) {
@@ -202,10 +227,10 @@ public class SoapUIServiceImpl implements SoapUIService {
 			message = messages.toString();
 		}
 
-		ReportPortal.emitLog(message, "ERROR", Calendar.getInstance().getTime());
+		return message;
 	}
 
-	private String getStackTraceContext(Throwable e) {
+	protected String getStackTraceContext(Throwable e) {
 		StringBuilder result = new StringBuilder();
 		for (int i = 0; i < e.getStackTrace().length; i++) {
 			result.append(e.getStackTrace()[i]);
@@ -214,15 +239,13 @@ public class SoapUIServiceImpl implements SoapUIService {
 		return result.toString();
 	}
 
-	private synchronized String toStringId(Maybe<String> id) {
+	protected synchronized String toStringId(Maybe<String> id) {
 		String tempID = UUID.randomUUID().toString();
 		ITEMS.put(tempID, id);
 		return tempID;
 	}
 
-	private synchronized Maybe<String> fromStringId(String tempId) {
-		SoapUI.log("TEMP ID: " + tempId);
-		SoapUI.log("ALL: " + ITEMS);
+	protected synchronized Maybe<String> fromStringId(String tempId) {
 		Maybe<String> id = ITEMS.get(tempId);
 		//		ITEMS.invalidate(tempId);
 		return id;

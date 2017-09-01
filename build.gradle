@@ -12,6 +12,7 @@ targetCompatibility = 1.6
 description = 'EPAM Report portal. SoapUI client API'
 repositories {
     jcenter()
+    mavenLocal()
     maven { url "http://dl.bintray.com/epam/reportportal" }
     maven { url "http://www.eviware.com/repository/maven2" }
 }
@@ -19,7 +20,7 @@ repositories {
 dependencies {
     compileOnly 'eviware:soapui:4.5.1'
     compileOnly 'log4j:log4j:1.2.17'
-    compile 'com.epam.reportportal:client-java:3.0.9'
+    compile 'com.epam.reportportal:client-java:3.0.10'
     compile 'com.epam.reportportal:logger-java-log4j:3.0.2'
 }
 

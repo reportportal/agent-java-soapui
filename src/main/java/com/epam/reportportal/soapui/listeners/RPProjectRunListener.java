@@ -20,8 +20,8 @@
  */
 package com.epam.reportportal.soapui.listeners;
 
+import com.epam.reportportal.soapui.injection.SoapUIInjector;
 import com.epam.reportportal.soapui.service.SoapUIService;
-import com.epam.reportportal.soapui.service.SoapUIServiceImpl;
 import com.epam.ta.reportportal.log4j.appender.ReportPortalAppender;
 import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.model.testsuite.*;
@@ -47,7 +47,7 @@ public class RPProjectRunListener implements ProjectRunListener {
 	@Override
 	public void beforeRun(ProjectRunner runner, ProjectRunContext context) {
 		try {
-			service = new SoapUIServiceImpl(context.getProject());
+			service = SoapUIInjector.newOne(context.getProject()).getBean(SoapUIService.class);
 			defineLogger();
 		} catch (Throwable t) {
 			SoapUI.log("ReportPortal plugin cannot be initialized. " + t.getMessage());
@@ -90,7 +90,7 @@ public class RPProjectRunListener implements ProjectRunListener {
 			org.apache.log4j.Logger logger = (org.apache.log4j.Logger) loggers.nextElement();
 			if (logger.getAppender(BASE_APPENDER_NAME) != null) {
 				/*
-                * Report portal soapui log4j appender compatible only with
+				* Report portal soapui log4j appender compatible only with
         		* groovy.log appender because this logger used for logging user
         		* logs from groovy scripts. Using soapui log4j appender with
         		* other appender unsafe because they may be not synchronized

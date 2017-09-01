@@ -22,14 +22,18 @@ package com.epam.reportportal.soapui.injection;
 
 import com.epam.reportportal.guice.ListenerPropertyBinder;
 import com.epam.reportportal.listeners.ListenerParameters;
+import com.epam.reportportal.soapui.results.ASCIIArtGenerator;
 import com.epam.reportportal.soapui.results.GroovyScriptLogger;
 import com.epam.reportportal.soapui.results.HttpMessageExchangeLogger;
 import com.epam.reportportal.soapui.results.ResultLogger;
 import com.epam.reportportal.soapui.service.SoapUIContext;
+import com.epam.reportportal.soapui.service.SoapUIService;
+import com.epam.reportportal.soapui.service.StepBasedSoapUIServiceImpl;
+import com.epam.reportportal.soapui.service.TestBasedSoapUIServiceImpl;
 import com.epam.reportportal.utils.properties.ListenerProperty;
 import com.epam.reportportal.utils.properties.PropertiesLoader;
-import com.eviware.soapui.SoapUI;
 import com.eviware.soapui.model.TestPropertyHolder;
+import rp.com.google.common.base.Strings;
 import rp.com.google.inject.*;
 import rp.com.google.inject.name.Named;
 import rp.com.google.inject.name.Names;
@@ -42,10 +46,12 @@ import java.util.Properties;
  * Guice module with soapUI client beans.
  *
  * @author Raman_Usik
+ * @author Andrei Varabyeu
  */
 
 class SoapUIListenersModule implements Module {
 
+	private static final String REPORTER_TYPE_PROPERTY = "reporterType";
 	private Properties properties;
 
 	SoapUIListenersModule(TestPropertyHolder contextProperties) {
@@ -54,28 +60,27 @@ class SoapUIListenersModule implements Module {
 
 	@Override
 	public void configure(Binder binder) {
-		SoapUI.log("BINDING STARTED!");
 		PropertiesLoader propertiesLoader = PropertiesLoader.load();
 		propertiesLoader.overrideWith(properties);
+		propertiesLoader.validate();
 
-		SoapUI.log("PROPERTIES ARE LOADED!");
 		binder.bind(ListenerParameters.class).toInstance(new ListenerParameters(propertiesLoader));
-
-
 
 		Names.bindProperties(binder, properties);
 		for (final ListenerProperty listenerProperty : ListenerProperty.values()) {
-			System.out.println("BINDING: " + listenerProperty);
-			SoapUI.log("BINDING: " + listenerProperty);
 			binder.bind(Key.get(String.class, ListenerPropertyBinder.named(listenerProperty))).toProvider(new Provider<String>() {
 				@Override
 				public String get() {
-					SoapUI.log("GETTING PROPERTY!!: " + listenerProperty);
 					return properties.getProperty(listenerProperty.getPropertyName());
 				}
 			});
 		}
 		binder.bind(PropertiesLoader.class).toInstance(propertiesLoader);
+
+		String listenerType = properties.getProperty(REPORTER_TYPE_PROPERTY);
+		binder.bind(SoapUIService.class).to(ListenerType.fromString(listenerType).getImpl());
+
+		binder.bind(ASCIIArtGenerator.class).in(Scopes.SINGLETON);
 
 	}
 
@@ -86,6 +91,7 @@ class SoapUIListenersModule implements Module {
 	 * @return SoapUIContext
 	 */
 	@Provides
+	@Singleton
 	public SoapUIContext provideSoapUIContext(ListenerParameters parameters) {
 		SoapUIContext soapUIContext = new SoapUIContext();
 		soapUIContext.setLaunchName(parameters.getLaunchName());
@@ -104,7 +110,6 @@ class SoapUIListenersModule implements Module {
 		for (String key : params.getPropertyNames()) {
 			final String value = params.getPropertyValue(key);
 			if (null != value) {
-				SoapUI.log(String.format("%s: %s", key, value));
 				properties.put(key, value);
 			}
 
@@ -112,4 +117,32 @@ class SoapUIListenersModule implements Module {
 		return properties;
 	}
 
+	enum ListenerType {
+		TEST_BASED(TestBasedSoapUIServiceImpl.class),
+		STEP_BASED(StepBasedSoapUIServiceImpl.class);
+
+		private Class<? extends SoapUIService> impl;
+
+		ListenerType(Class<? extends SoapUIService> impl) {
+			this.impl = impl;
+		}
+
+		static ListenerType fromString(String type) {
+			if (Strings.isNullOrEmpty(type)) {
+				return STEP_BASED;
+			}
+
+			for (ListenerType listenerType : values()) {
+				if (listenerType.name().equalsIgnoreCase(type)) {
+					return listenerType;
+				}
+			}
+
+			return STEP_BASED;
+		}
+
+		Class<? extends SoapUIService> getImpl() {
+			return impl;
+		}
+	}
 }
