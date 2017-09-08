@@ -12,7 +12,6 @@ targetCompatibility = 1.6
 description = 'EPAM Report portal. SoapUI client API'
 repositories {
     jcenter()
-    mavenLocal()
     maven { url "http://dl.bintray.com/epam/reportportal" }
     maven { url "http://www.eviware.com/repository/maven2" }
 }
@@ -49,3 +48,6 @@ task zip(type: Zip, overwrite: true) {
 build.dependsOn zip
 
 
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.1'
+}
