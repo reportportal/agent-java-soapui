@@ -3,5 +3,6 @@ sudo: required
 language: java
 jdk:
   - oraclejdk7
-  - openjdk7
-  - oraclejdk8
+
+install:
+ - JAVA_HOME=$(jdk_switcher home oraclejdk7) ./gradlew classes testClasses
