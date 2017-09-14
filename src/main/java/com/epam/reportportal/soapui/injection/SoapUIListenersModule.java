@@ -51,7 +51,7 @@ import java.util.Properties;
 
 class SoapUIListenersModule implements Module {
 
-	private static final String REPORTER_TYPE_PROPERTY = "reporterType";
+	private static final String REPORTER_TYPE_PROPERTY = "rp.reporter.type";
 	private Properties properties;
 
 	SoapUIListenersModule(TestPropertyHolder contextProperties) {
