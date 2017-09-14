@@ -2,6 +2,9 @@ sudo: required
 
 language: java
 
+before_intall:
+  - JAVA_HOME=$(jdk_switcher home openjdk8) ./gradlew
+
 script: ./gradlew build
 
 jdk:
