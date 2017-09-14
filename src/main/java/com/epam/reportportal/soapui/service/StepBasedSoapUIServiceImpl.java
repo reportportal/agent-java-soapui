@@ -79,7 +79,7 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setTags(parameters.getTags());
 		rq.setMode(parameters.getLaunchRunningMode());
-
+		rq.setDescription(parameters.getDescription());
 		this.reportPortal = ReportPortal.startLaunch(client, parameters, rq);
 
 		context.setLaunchFailed(false);
