@@ -5,4 +5,4 @@ jdk:
   - oraclejdk7
 
 install:
- - JAVA_HOME=$(jdk_switcher home oraclejdk7) ./gradlew classes testClasses
+ - JAVA_HOME=$(jdk_switcher home oraclejdk7) ./gradlew build
