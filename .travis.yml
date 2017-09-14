@@ -1,3 +1,6 @@
+# use Docker-based container (instead of OpenVZ)
+sudo: false
+
 language: java
 
 script: ./gradlew build
