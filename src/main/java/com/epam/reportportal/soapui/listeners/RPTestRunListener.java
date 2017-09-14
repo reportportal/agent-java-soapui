@@ -20,61 +20,57 @@
  */
 package com.epam.reportportal.soapui.listeners;
 
-import com.epam.reportportal.soapui.injection.SoapUIInjectorProvider;
-import com.epam.reportportal.soapui.parameters.TestStatus;
-import com.epam.reportportal.soapui.service.ISoapUIService;
+import com.epam.reportportal.soapui.service.SoapUIService;
 import com.eviware.soapui.model.testsuite.TestCaseRunContext;
 import com.eviware.soapui.model.testsuite.TestCaseRunner;
 import com.eviware.soapui.model.testsuite.TestRunListener;
 import com.eviware.soapui.model.testsuite.TestStep;
 import com.eviware.soapui.model.testsuite.TestStepResult;
 
+import static com.epam.reportportal.soapui.listeners.RPProjectRunListener.RP_SERVICE;
+
 /**
  * Report portal related implementation of {@link TestRunListener}.
- * This listener should be used only with {@link RPTestSuiteRunListener} and   {@link RPProjectRunListener}. 
- * 
- * @author Raman_Usik
+ * This listener should be used only with {@link RPTestSuiteRunListener} and   {@link RPProjectRunListener}.
  *
+ * @author Raman_Usik
+ * @author Andrei Varabyeu
  */
 public class RPTestRunListener implements TestRunListener {
-	
-	private ISoapUIService service = SoapUIInjectorProvider.getInstance().getBean(ISoapUIService.class);
 
-	public void beforeRun(TestCaseRunner paramTestCaseRunner,
-			TestCaseRunContext paramTestCaseRunContext) {
-	}
+    private SoapUIService service;
 
-	@Override
-	public void afterRun(TestCaseRunner paramTestCaseRunner,
-			TestCaseRunContext paramTestCaseRunContext) {
-	}
+    public void beforeRun(TestCaseRunner runner,
+            TestCaseRunContext context) {
+        service = (SoapUIService) context.getProperty(RP_SERVICE);
+        if (null == service) {
+            service = SoapUIService.NOP_SERVICE;
+        }
+    }
 
-	@Override
-	public void beforeStep(TestCaseRunner paramTestCaseRunner,
-			TestCaseRunContext paramTestCaseRunContext, TestStep paramTestStep) {
-		service.startTestStep(paramTestStep);
-	}
+    @Override
+    public void afterRun(TestCaseRunner runner,
+            TestCaseRunContext context) {
+    }
 
-	@Override
-	public void afterStep(TestCaseRunner paramTestCaseRunner,
-			TestCaseRunContext paramTestCaseRunContext,
-			TestStepResult paramTestStepResult) {
-		if (TestStatus.FAILED.getResult().equals(
-				paramTestStepResult.getStatus().toString())) {
-			service.errorDuringExecution(paramTestStepResult);
-		}
-		service.finishTestStep(paramTestStepResult);
-		if (TestStatus.CANCELED.getResult().equals(
-				paramTestStepResult.getStatus().toString())) {
-			//stopTesting();
-		}
-	}
+    @Override
+    public void beforeStep(TestCaseRunner paramTestCaseRunner,
+            TestCaseRunContext context, TestStep testStep) {
+        service.startTestStep(testStep, context);
+    }
 
-	@Override
-	@Deprecated
-	public void beforeStep(TestCaseRunner paramTestCaseRunner,
-			TestCaseRunContext paramTestCaseRunContext) {
+    @Override
+    public void afterStep(TestCaseRunner paramTestCaseRunner,
+            TestCaseRunContext paramTestCaseRunContext,
+            TestStepResult paramTestStepResult) {
+        service.finishTestStep(paramTestStepResult, paramTestCaseRunContext);
+    }
 
-	}
+    @Override
+    @Deprecated
+    public void beforeStep(TestCaseRunner paramTestCaseRunner,
+            TestCaseRunContext paramTestCaseRunContext) {
+
+    }
 
 }

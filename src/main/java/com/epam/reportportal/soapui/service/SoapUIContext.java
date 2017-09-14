@@ -22,7 +22,6 @@ package com.epam.reportportal.soapui.service;
 
 public class SoapUIContext {
 	private String launchName;
-	private String launchId;
 
 	private boolean isLaunchFailed;
 	private boolean isTestCanceled;
@@ -33,14 +32,6 @@ public class SoapUIContext {
 
 	public void setLaunchName(String launchName) {
 		this.launchName = launchName;
-	}
-
-	public String getLaunchId() {
-		return launchId;
-	}
-
-	public void setLaunchId(String launchId) {
-		this.launchId = launchId;
 	}
 
 	public boolean isLaunchFailed() {
