@@ -1,4 +1,4 @@
-sudo: required
+sudo: false
 
 language: java
 
@@ -6,7 +6,7 @@ script: ./gradlew build
 
 jdk:
     - oraclejdk8
-    - oraclejdk7
+    - openjdk7
 # Gradle requires JDK7 to build the project
 #    - openjdk6
 
