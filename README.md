@@ -14,6 +14,15 @@
 * Unpack ./build/distributions/agent-java-soapui-full.zip
 * Copy JAR file to soapUI's lib folder and listeners folder to the soapUI installation root.
 
+Add necessary properties to your project (as custom properties). For example:
+```
+rp.endpoint=https://rp.epam.com
+rp.uuid={YOUR_TOKEN}
+rp.project={YOUR_PROJECT}
+rp.launch={NAME_OF_YOUR_LAUNCH}
+```
+- Reload your project
+- RUN your project and enjoy result in ReportPortal
 
 ## Configuration parameters
 * Agent supports all parameters of JVM-based agents [described here](http://reportportal.io/#documentation/JVM-based-clients-configuration)
