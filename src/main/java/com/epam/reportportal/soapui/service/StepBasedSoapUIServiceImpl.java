@@ -1,28 +1,23 @@
 /*
- * Copyright 2016 EPAM Systems
+ * Copyright (C) 2018 EPAM Systems
  *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This file is part of EPAM Report Portal.
- * https://github.com/reportportal/agent-java-soapui
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Report Portal is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Report Portal is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Report Portal.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.epam.reportportal.soapui.service;
 
 import com.epam.reportportal.listeners.ListenerParameters;
+import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
-import com.epam.reportportal.service.ReportPortalClient;
 import com.epam.reportportal.soapui.parameters.TestItemType;
 import com.epam.reportportal.soapui.parameters.TestStatus;
 import com.epam.reportportal.soapui.parameters.TestStepType;
@@ -40,8 +35,6 @@ import io.reactivex.Maybe;
 import rp.com.google.common.base.Function;
 import rp.com.google.common.base.StandardSystemProperty;
 import rp.com.google.common.base.Strings;
-import rp.com.google.inject.Inject;
-import rp.com.google.inject.name.Named;
 
 import javax.annotation.Nullable;
 import java.io.PrintWriter;
@@ -58,30 +51,31 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 
 	private static final String LINE_SEPARATOR = StandardSystemProperty.LINE_SEPARATOR.value();
 	private static final Map<String, Maybe<String>> ITEMS = new ConcurrentHashMap<String, Maybe<String>>();
-	public static final String ID = "rp_id";
+	protected static final String ID = "rp_id";
 
-	@Inject
-	protected SoapUIContext context;
-	@Inject
-	protected ListenerParameters parameters;
-	@Inject
-	protected ReportPortalClient client;
+	protected final SoapUIContext context;
+	protected final ListenerParameters parameters;
+	protected final List<ResultLogger<?>> resultLoggers;
 
-	@Inject
-	@Named("resultLoggers")
-	protected List<ResultLogger<?>> resultLoggers;
+	protected ReportPortal reportPortal;
+	protected Launch launch;
 
-	private ReportPortal reportPortal;
+	public StepBasedSoapUIServiceImpl(ListenerParameters parameters, List<ResultLogger<?>> resultLoggers) {
+		this.context = new SoapUIContext();
+		this.parameters = parameters;
+		this.resultLoggers = resultLoggers;
+	}
 
 	public void startLaunch() {
 		StartLaunchRQ rq = new StartLaunchRQ();
-		rq.setName(context.getLaunchName());
+		rq.setName(this.parameters.getLaunchName());
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setTags(parameters.getTags());
 		rq.setMode(parameters.getLaunchRunningMode());
 		rq.setDescription(parameters.getDescription());
-		this.reportPortal = ReportPortal.startLaunch(client, parameters, rq);
 
+		this.reportPortal = ReportPortal.builder().withParameters(parameters).build();
+		this.launch = reportPortal.newLaunch(rq);
 		context.setLaunchFailed(false);
 	}
 
@@ -94,7 +88,7 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 			rq.setStatus(context.isLaunchFailed() ? TestStatus.FAILED.getResult() : TestStatus.FINISHED.getResult());
 		}
 
-		reportPortal.finishLaunch(rq);
+		this.launch.finish(rq);
 
 	}
 
@@ -104,7 +98,7 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(TestItemType.TEST_SUITE.getValue());
 
-		Maybe<String> rs = reportPortal.startTestItem(rq);
+		Maybe<String> rs = this.launch.startTestItem(rq);
 		testSuite.setPropertyValue(ID, toStringId(rs));
 	}
 
@@ -116,13 +110,15 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 			context.setLaunchFailed(true);
 		}
 
-		reportPortal.finishTestItem(fromStringId(testSuiteContext.getTestSuite().getPropertyValue(ID)), rq);
+		this.launch.finishTestItem(fromStringId(testSuiteContext.getTestSuite().getPropertyValue(ID)), rq);
 
 	}
 
 	public void startTestCase(TestCase testCase, PropertyExpansionContext propertyContext) {
-		Maybe<String> id = startItem(testCase.getName(), TestItemType.TEST_CASE,
-				fromStringId(testCase.getTestSuite().getPropertyValue(ID)));
+		Maybe<String> id = startItem(testCase.getName(),
+				TestItemType.TEST_CASE,
+				fromStringId(testCase.getTestSuite().getPropertyValue(ID))
+		);
 		testCase.setPropertyValue(ID, toStringId(id));
 	}
 
@@ -132,21 +128,14 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(type.getValue());
 
-		Maybe<String> id;
-		if (null == parentId) {
-			id = reportPortal.startTestItem(rq);
-		} else {
-			id = reportPortal.startTestItem(parentId, rq);
-		}
-
-		return id;
+		return this.launch.startTestItem(parentId, rq);
 	}
 
 	public void finishTestCase(TestCaseRunner testCaseContext, PropertyExpansionContext propertyContext) {
 		FinishTestItemRQ rq = new FinishTestItemRQ();
 		rq.setEndTime(Calendar.getInstance().getTime());
 		rq.setStatus(TestStatus.fromSoapUI(testCaseContext.getStatus()));
-		reportPortal.finishTestItem(fromStringId(testCaseContext.getTestCase().getPropertyValue(ID)), rq);
+		this.launch.finishTestItem(fromStringId(testCaseContext.getTestCase().getPropertyValue(ID)), rq);
 	}
 
 	public void startTestStep(TestStep testStep, TestCaseRunContext context) {
@@ -159,7 +148,7 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 		rq.setDescription(TestStepType.getStepType(testStep.getClass()));
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(TestItemType.TEST_STEP.getValue());
-		Maybe<String> rs = reportPortal.startTestItem(fromStringId(testStep.getTestCase().getPropertyValue(ID)), rq);
+		Maybe<String> rs = this.launch.startTestItem(fromStringId(testStep.getTestCase().getPropertyValue(ID)), rq);
 		context.setProperty(ID, rs);
 	}
 
@@ -191,7 +180,7 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 		}
 		rq.setStatus(TestStatus.fromSoapUIStep(testStepContext.getStatus()));
 
-		reportPortal.finishTestItem(testId, rq);
+		this.launch.finishTestItem(testId, rq);
 
 	}
 
@@ -216,8 +205,8 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 
 		String message;
 		if (testStepContext.getError() != null) {
-			message = "Exception: " + testStepContext.getError().getMessage() + LINE_SEPARATOR + this
-					.getStackTraceContext(testStepContext.getError());
+			message = "Exception: " + testStepContext.getError().getMessage() + LINE_SEPARATOR
+					+ this.getStackTraceContext(testStepContext.getError());
 		} else {
 			StringBuilder messages = new StringBuilder();
 			for (String messageLog : testStepContext.getMessages()) {
@@ -246,9 +235,7 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 	}
 
 	protected synchronized Maybe<String> fromStringId(String tempId) {
-		Maybe<String> id = ITEMS.get(tempId);
-		//		ITEMS.invalidate(tempId);
-		return id;
+		return ITEMS.get(tempId);
 
 	}
 }

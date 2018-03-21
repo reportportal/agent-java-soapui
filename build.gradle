@@ -13,19 +13,19 @@ description = 'EPAM Report portal. SoapUI client API'
 repositories {
     jcenter()
     maven { url "http://dl.bintray.com/epam/reportportal" }
-    maven { url "http://www.eviware.com/repository/maven2" }
+    maven { url "http://www.soapui.org/repository/maven2" }
 }
 
 dependencies {
-    compileOnly 'eviware:soapui:4.5.1'
+    compileOnly 'com.smartbear.soapui:soapui:5.4.0'
     compileOnly 'log4j:log4j:1.2.17'
-    compile 'com.epam.reportportal:client-java:3.0.10'
-    compile 'com.epam.reportportal:logger-java-log4j:3.0.2'
+    compile 'com.epam.reportportal:client-java:4.0.4'
+    compile 'com.epam.reportportal:logger-java-log4j:4.0.1'
 }
 
 shadowJar {
     dependencies {
-        exclude(dependency('eviware:soapui'))
+        exclude(dependency('com.smartbear.soapui:soapui'))
     }
 }
 
@@ -49,5 +49,5 @@ build.dependsOn zip
 
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.1'
+    gradleVersion = '4.6'
 }

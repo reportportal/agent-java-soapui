@@ -1,26 +1,20 @@
 /*
- * Copyright 2016 EPAM Systems
+ * Copyright (C) 2018 EPAM Systems
  *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This file is part of EPAM Report Portal.
- * https://github.com/reportportal/agent-java-soapui
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Report Portal is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Report Portal is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Report Portal.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.epam.reportportal.soapui.listeners;
 
-import com.epam.reportportal.soapui.injection.SoapUIInjector;
 import com.epam.reportportal.soapui.service.SoapUIService;
 import com.epam.ta.reportportal.log4j.appender.ReportPortalAppender;
 import com.eviware.soapui.SoapUI;
@@ -47,7 +41,7 @@ public class RPProjectRunListener implements ProjectRunListener {
 	@Override
 	public void beforeRun(ProjectRunner runner, ProjectRunContext context) {
 		try {
-			service = SoapUIInjector.newOne(context.getProject()).getBean(SoapUIService.class);
+			service = RpServiceBuilder.build(context.getProject());
 			defineLogger();
 		} catch (Throwable t) {
 			SoapUI.log("ReportPortal plugin cannot be initialized. " + t.getMessage());
@@ -90,13 +84,13 @@ public class RPProjectRunListener implements ProjectRunListener {
 			org.apache.log4j.Logger logger = (org.apache.log4j.Logger) loggers.nextElement();
 			if (logger.getAppender(BASE_APPENDER_NAME) != null) {
 				/*
-				* Report portal soapui log4j appender compatible only with
-        		* groovy.log appender because this logger used for logging user
-        		* logs from groovy scripts. Using soapui log4j appender with
-        		* other appender unsafe because they may be not synchronized
-        		* with listener(logs can be logged to report portal only if
-        		* appender started test step)
-        		*/
+				 * Report portal soapui log4j appender compatible only with
+				 * groovy.log appender because this logger used for logging user
+				 * logs from groovy scripts. Using soapui log4j appender with
+				 * other appender unsafe because they may be not synchronized
+				 * with listener(logs can be logged to report portal only if
+				 * appender started test step)
+				 */
 				logger.removeAppender(BASE_APPENDER_NAME);
 
 				if (logger.getName().equals("groovy.log")) {
