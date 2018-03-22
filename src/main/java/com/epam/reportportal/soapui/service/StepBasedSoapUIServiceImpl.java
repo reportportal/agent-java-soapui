@@ -36,7 +36,6 @@ import rp.com.google.common.base.Function;
 import rp.com.google.common.base.StandardSystemProperty;
 import rp.com.google.common.base.Strings;
 
-import javax.annotation.Nullable;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
@@ -162,7 +161,7 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 		for (final SaveLogRQ rq : getStepLogReport(testStepContext)) {
 			ReportPortal.emitLog(new Function<String, SaveLogRQ>() {
 				@Override
-				public SaveLogRQ apply(@Nullable String id) {
+				public SaveLogRQ apply(String id) {
 					rq.setTestItemId(id);
 					return rq;
 				}

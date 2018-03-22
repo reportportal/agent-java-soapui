@@ -27,7 +27,6 @@ import io.reactivex.Maybe;
 import rp.com.google.common.base.Function;
 import rp.com.google.common.base.Strings;
 
-import javax.annotation.Nullable;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -81,7 +80,7 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
 		for (final SaveLogRQ rq : getStepLogReport(testStepContext)) {
 			loggingContext.emit(new Function<String, SaveLogRQ>() {
 				@Override
-				public SaveLogRQ apply(@Nullable String id) {
+				public SaveLogRQ apply(String id) {
 					rq.setTestItemId(id);
 					return rq;
 				}
@@ -115,7 +114,7 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
 	private Function<String, SaveLogRQ> asFunction(final String message, final String level, final Date time) {
 		return new Function<String, SaveLogRQ>() {
 			@Override
-			public SaveLogRQ apply(@Nullable String id) {
+			public SaveLogRQ apply(String id) {
 				SaveLogRQ rq = new SaveLogRQ();
 				rq.setLevel(level);
 				rq.setLogTime(time);
