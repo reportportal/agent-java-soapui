@@ -1,53 +1,77 @@
-plugins {
-    id 'net.researchgate.release' version '2.4.1'
-    id "com.jfrog.bintray" version "1.7"
-    id 'com.github.johnrengelman.shadow' version '2.0.1'
-}
-
-apply plugin: 'java'
-apply from: 'release.gradle'
-apply from: 'quality.gradle'
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
-description = 'EPAM Report portal. SoapUI client API'
-repositories {
-    jcenter()
-    maven { url "http://dl.bintray.com/epam/reportportal" }
-    maven { url "http://www.soapui.org/repository/maven2" }
-}
-
-dependencies {
-    compileOnly 'com.smartbear.soapui:soapui:5.4.0'
-    compileOnly 'log4j:log4j:1.2.17'
-    compile 'com.epam.reportportal:client-java:4.0.4'
-    compile 'com.epam.reportportal:logger-java-log4j:4.0.1'
-}
-
-shadowJar {
+buildscript {
+    repositories {
+        jcenter()
+    }
     dependencies {
-        exclude(dependency('com.smartbear.soapui:soapui'))
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.3'
+        classpath 'net.researchgate:gradle-release:2.6.0'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
     }
 }
 
-task zip(type: Zip, overwrite: true) {
-    def path = "${project.projectDir}/src/main/resources/"
-    classifier = '-full'
-    from shadowJar.outputs.files
-//    into('/libs') {
-//        from configurations.compile
-//    }
-    from(path, {
-        include 'soapui-log4j.xml'
-        into('/bin')
-    })
-    from(path, {
-        include 'reportportal-listeners.xml'
-        into('/bin/listeners')
-    })
+description = 'EPAM Report portal. SoapUI client API'
+
+
+allprojects {
+
+
+    apply plugin: 'java'
+
+    group = 'com.epam.reportportal'
 }
-build.dependsOn zip
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'maven-publish'
+    apply plugin: 'com.github.johnrengelman.shadow'
+    apply plugin: 'net.researchgate.release'
+    apply plugin: 'com.jfrog.bintray'
 
 
+
+    apply from: "${rootProject.projectDir}/quality.gradle"
+    apply from: "${rootProject.projectDir}/release.gradle"
+
+    sourceCompatibility = 1.6
+    targetCompatibility = 1.6
+
+
+    repositories {
+        jcenter()
+        maven { url "http://dl.bintray.com/epam/reportportal" }
+        maven { url "http://www.soapui.org/repository/maven2" }
+    }
+
+    dependencies {
+        compileOnly 'log4j:log4j:1.2.17'
+        compile 'com.epam.reportportal:client-java:4.0.4'
+        compile 'com.epam.reportportal:logger-java-log4j:4.0.1'
+    }
+
+    shadowJar {
+        dependencies {
+            exclude(dependency('com.smartbear.soapui:soapui'))
+        }
+    }
+
+    //noinspection GroovyAssignabilityCheck
+    task zip(type: Zip, overwrite: true) {
+        def path = "${project.projectDir}/src/main/resources/"
+        classifier = 'full'
+        from shadowJar.outputs.files
+        from(path, {
+            include 'soapui-log4j.xml'
+            into('/bin')
+        })
+        from(path, {
+            include 'reportportal-listeners.xml'
+            into('/bin/listeners')
+        })
+    }
+    build.dependsOn zip
+}
+
+//noinspection GroovyAssignabilityCheck
 task wrapper(type: Wrapper) {
     gradleVersion = '4.6'
 }

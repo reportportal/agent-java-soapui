@@ -1,0 +1,4 @@
+dependencies {
+    compile project(':soapui')
+    compileOnly 'com.smartbear:ready-api-soapui-pro:2.3.0'
+}

@@ -1,1 +1,5 @@
 rootProject.name = 'agent-java-soapui'
+
+include 'soapui'
+include 'readyapi'
+//include 'common'
