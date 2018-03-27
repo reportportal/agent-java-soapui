@@ -47,7 +47,7 @@ public class RPTestSuiteRunListener implements TestSuiteRunListener {
 		service = (SoapUIService) context.getProperty(RP_SERVICE);
 		if (null == service) {
 			try {
-				service = RpServiceBuilder.build(context.getTestSuite());
+				service = RpServiceBuilder.build(context.getTestSuite().getProject());
 				service.startLaunch();
 				service.startTestSuite(context.getTestSuite());
 			} catch (Throwable t) {
