@@ -5,3 +5,9 @@ dependencies {
     compile 'com.epam.reportportal:client-java:4.0.4'
     compile 'com.epam.reportportal:logger-java-log4j:4.0.1'
 }
+
+shadowJar {
+    dependencies {
+        exclude(dependency('com.smartbear.soapui:soapui'))
+    }
+}

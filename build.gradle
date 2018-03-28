@@ -48,11 +48,6 @@ subprojects {
         compile 'com.epam.reportportal:logger-java-log4j:4.0.1'
     }
 
-    shadowJar {
-        dependencies {
-            exclude(dependency('com.smartbear.soapui:soapui'))
-        }
-    }
 
     //noinspection GroovyAssignabilityCheck
     task zip(type: Zip, overwrite: true) {

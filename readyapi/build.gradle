@@ -2,3 +2,12 @@ dependencies {
     compile project(':soapui')
     compileOnly 'com.smartbear:ready-api-soapui-pro:2.3.0'
 }
+
+shadowJar {
+    dependencies {
+        exclude(dependency('com.smartbear.soapui:soapui'))
+        exclude(dependency('org.slf4j:slf4j-api'))
+        exclude(dependency('org.slf4j:slf4j-ext'))
+        exclude(dependency('org.slf4j:slf4j-log4j12'))
+    }
+}
