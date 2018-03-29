@@ -21,11 +21,12 @@ import com.eviware.soapui.model.testsuite.TestStepResult.TestStepStatus;
 public enum TestStatus {
 	FINISHED("PASSED"),
 	FAILED("FAILED"),
+	PASS("PASSED"),
 	FAIL("FAILED"),
 	CANCELED("SKIPPED"),
 	OK("PASSED"),
+	WARNING("PASSED"),
 	UNKNOWN("PASSED");
-
 	private String value;
 
 	TestStatus(String result) {

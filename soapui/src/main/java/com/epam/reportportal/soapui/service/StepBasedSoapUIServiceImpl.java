@@ -79,37 +79,43 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 	}
 
 	public void finishLaunch() {
-		FinishExecutionRQ rq = new FinishExecutionRQ();
-		rq.setEndTime(Calendar.getInstance().getTime());
-		if (context.isTestCanceled()) {
-			rq.setStatus(TestStatus.FAILED.getResult());
-		} else {
-			rq.setStatus(context.isLaunchFailed() ? TestStatus.FAILED.getResult() : TestStatus.FINISHED.getResult());
+		if (null != launch) {
+			FinishExecutionRQ rq = new FinishExecutionRQ();
+			rq.setEndTime(Calendar.getInstance().getTime());
+			if (context.isTestCanceled()) {
+				rq.setStatus(TestStatus.FAILED.getResult());
+			} else {
+				rq.setStatus(context.isLaunchFailed() ? TestStatus.FAILED.getResult() : TestStatus.FINISHED.getResult());
+			}
+
+			this.launch.finish(rq);
 		}
-
-		this.launch.finish(rq);
-
 	}
 
 	public void startTestSuite(TestSuite testSuite) {
-		StartTestItemRQ rq = new StartTestItemRQ();
-		rq.setName(testSuite.getName());
-		rq.setStartTime(Calendar.getInstance().getTime());
-		rq.setType(TestItemType.TEST_SUITE.getValue());
+		if (null != launch) {
+			StartTestItemRQ rq = new StartTestItemRQ();
+			rq.setName(testSuite.getName());
+			rq.setStartTime(Calendar.getInstance().getTime());
+			rq.setType(TestItemType.TEST_SUITE.getValue());
 
-		Maybe<String> rs = this.launch.startTestItem(rq);
-		testSuite.setPropertyValue(ID, toStringId(rs));
+			Maybe<String> rs = this.launch.startTestItem(rq);
+			testSuite.setPropertyValue(ID, toStringId(rs));
+		}
+
 	}
 
 	public void finishTestSuite(TestSuiteRunner testSuiteContext) {
-		FinishTestItemRQ rq = new FinishTestItemRQ();
-		rq.setEndTime(Calendar.getInstance().getTime());
-		rq.setStatus(TestStatus.fromSoapUI(testSuiteContext.getStatus()));
-		if (testSuiteContext.getStatus().equals(Status.FAILED)) {
-			context.setLaunchFailed(true);
-		}
+		if (null != launch) {
+			FinishTestItemRQ rq = new FinishTestItemRQ();
+			rq.setEndTime(Calendar.getInstance().getTime());
+			rq.setStatus(TestStatus.fromSoapUI(testSuiteContext.getStatus()));
+			if (testSuiteContext.getStatus().equals(Status.FAILED)) {
+				context.setLaunchFailed(true);
+			}
 
-		this.launch.finishTestItem(fromStringId(testSuiteContext.getTestSuite().getPropertyValue(ID)), rq);
+			this.launch.finishTestItem(fromStringId(testSuiteContext.getTestSuite().getPropertyValue(ID)), rq);
+		}
 
 	}
 
@@ -122,64 +128,78 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 	}
 
 	protected Maybe<String> startItem(String name, TestItemType type, Maybe<String> parentId) {
-		StartTestItemRQ rq = new StartTestItemRQ();
-		rq.setName(name);
-		rq.setStartTime(Calendar.getInstance().getTime());
-		rq.setType(type.getValue());
+		if (null != launch) {
+			StartTestItemRQ rq = new StartTestItemRQ();
+			rq.setName(name);
+			rq.setStartTime(Calendar.getInstance().getTime());
+			rq.setType(type.getValue());
 
-		return this.launch.startTestItem(parentId, rq);
+			return this.launch.startTestItem(parentId, rq);
+		} else {
+			return Maybe.empty();
+		}
+
 	}
 
 	public void finishTestCase(TestCaseRunner testCaseContext, PropertyExpansionContext propertyContext) {
-		FinishTestItemRQ rq = new FinishTestItemRQ();
-		rq.setEndTime(Calendar.getInstance().getTime());
-		rq.setStatus(TestStatus.fromSoapUI(testCaseContext.getStatus()));
-		this.launch.finishTestItem(fromStringId(testCaseContext.getTestCase().getPropertyValue(ID)), rq);
+		if (null != launch) {
+			FinishTestItemRQ rq = new FinishTestItemRQ();
+			rq.setEndTime(Calendar.getInstance().getTime());
+			rq.setStatus(TestStatus.fromSoapUI(testCaseContext.getStatus()));
+			this.launch.finishTestItem(fromStringId(testCaseContext.getTestCase().getPropertyValue(ID)), rq);
+		}
+
 	}
 
 	public void startTestStep(TestStep testStep, TestCaseRunContext context) {
-		if (testStep.getPropertyValue(ID) != null) {
-			return;
+		if (null != launch) {
+			if (testStep.getPropertyValue(ID) != null) {
+				return;
+			}
+			this.context.setTestCanceled(false);
+			StartTestItemRQ rq = new StartTestItemRQ();
+			rq.setName(testStep.getName());
+			rq.setDescription(TestStepType.getStepType(testStep.getClass()));
+			rq.setStartTime(Calendar.getInstance().getTime());
+			rq.setType(TestItemType.TEST_STEP.getValue());
+			Maybe<String> rs = this.launch.startTestItem(fromStringId(testStep.getTestCase().getPropertyValue(ID)), rq);
+			context.setProperty(ID, rs);
 		}
-		this.context.setTestCanceled(false);
-		StartTestItemRQ rq = new StartTestItemRQ();
-		rq.setName(testStep.getName());
-		rq.setDescription(TestStepType.getStepType(testStep.getClass()));
-		rq.setStartTime(Calendar.getInstance().getTime());
-		rq.setType(TestItemType.TEST_STEP.getValue());
-		Maybe<String> rs = this.launch.startTestItem(fromStringId(testStep.getTestCase().getPropertyValue(ID)), rq);
-		context.setProperty(ID, rs);
+
 	}
 
 	public void finishTestStep(TestStepResult testStepContext, TestCaseRunContext paramTestCaseRunContext) {
-		Maybe<String> testId = (Maybe<String>) paramTestCaseRunContext.getProperty(ID);
+		if (null != launch) {
+			Maybe<String> testId = (Maybe<String>) paramTestCaseRunContext.getProperty(ID);
 
-		String logStepData = getLogStepData(testStepContext);
-		if (!Strings.isNullOrEmpty(logStepData)) {
-			ReportPortal.emitLog(logStepData, "INFO", Calendar.getInstance().getTime());
-		}
-		for (final SaveLogRQ rq : getStepLogReport(testStepContext)) {
-			ReportPortal.emitLog(new Function<String, SaveLogRQ>() {
-				@Override
-				public SaveLogRQ apply(String id) {
-					rq.setTestItemId(id);
-					return rq;
-				}
-			});
-		}
+			String logStepData = getLogStepData(testStepContext);
+			if (!Strings.isNullOrEmpty(logStepData)) {
+				ReportPortal.emitLog(logStepData, "INFO", Calendar.getInstance().getTime());
+			}
+			for (final SaveLogRQ rq : getStepLogReport(testStepContext)) {
+				ReportPortal.emitLog(new Function<String, SaveLogRQ>() {
+					@Override
+					public SaveLogRQ apply(String id) {
+						rq.setTestItemId(id);
+						return rq;
+					}
+				});
+			}
 
-		if (TestStepStatus.FAILED.equals(testStepContext.getStatus())) {
-			ReportPortal.emitLog(getStepError(testStepContext), "ERROR", Calendar.getInstance().getTime());
-		}
+			if (TestStepStatus.FAILED.equals(testStepContext.getStatus())) {
+				ReportPortal.emitLog(getStepError(testStepContext), "ERROR", Calendar.getInstance().getTime());
+			}
 
-		FinishTestItemRQ rq = new FinishTestItemRQ();
-		rq.setEndTime(Calendar.getInstance().getTime());
-		if (TestStepStatus.CANCELED.equals(testStepContext.getStatus())) {
-			context.setTestCanceled(true);
-		}
-		rq.setStatus(TestStatus.fromSoapUIStep(testStepContext.getStatus()));
+			FinishTestItemRQ rq = new FinishTestItemRQ();
+			rq.setEndTime(Calendar.getInstance().getTime());
+			if (TestStepStatus.CANCELED.equals(testStepContext.getStatus())) {
+				context.setTestCanceled(true);
+			}
+			rq.setStatus(TestStatus.fromSoapUIStep(testStepContext.getStatus()));
 
-		this.launch.finishTestItem(testId, rq);
+			this.launch.finishTestItem(testId, rq);
+
+		}
 
 	}
 
