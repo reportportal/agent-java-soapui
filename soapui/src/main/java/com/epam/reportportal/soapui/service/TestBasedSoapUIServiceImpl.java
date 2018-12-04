@@ -44,7 +44,7 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
 
 	private static final Map<String, LoggingContext> CONTEXT_MAP = new ConcurrentHashMap<String, LoggingContext>();
 	private static final String LEVEL_INFO = "INFO";
-	private static final String TEST_ITEM_ID = "rp_item_id";
+	private static final String ITEM_ID = "rp_item_id";
 
 	public TestBasedSoapUIServiceImpl(ListenerParameters parameters, List<ResultLogger<?>> resultLoggers) {
 		super(parameters, resultLoggers);
@@ -82,7 +82,7 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
 			loggingContext.emit(new Function<String, SaveLogRQ>() {
 				@Override
 				public SaveLogRQ apply(String id) {
-					paramTestCaseRunContext.getTestCase().setPropertyValue(TEST_ITEM_ID, id);
+					paramTestCaseRunContext.getTestCase().setPropertyValue(ITEM_ID, id);
 					rq.setTestItemId(id);
 					return rq;
 				}
