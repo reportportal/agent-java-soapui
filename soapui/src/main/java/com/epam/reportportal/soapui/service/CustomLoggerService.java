@@ -33,17 +33,21 @@ import static com.epam.reportportal.soapui.service.TestBasedSoapUIServiceImpl.*;
 public class CustomLoggerService {
 
     public static void log(String message, String level) {
-        LoggingContext loggingContext = CONTEXT_MAP.get(TEST_CASE_ID);
-        loggingContext.emit(asFunction(message, level, Calendar.getInstance().getTime()));
+        if (TEST_CASE_ID != null) {
+            LoggingContext loggingContext = CONTEXT_MAP.get(TEST_CASE_ID);
+            loggingContext.emit(asFunction(message, level, Calendar.getInstance().getTime()));   
+        }
     }
 
     public static void logFile(String message, File file, String level) throws IOException {
-        byte[] fileContent = Files.readAllBytes(file.toPath());
-        SaveLogRQ.File rqFile = new SaveLogRQ.File();
-        rqFile.setContent(fileContent);
-        rqFile.setContentType(Files.probeContentType(file.toPath()));
-        rqFile.setName(UUID.randomUUID().toString());
-        LoggingContext loggingContext = CONTEXT_MAP.get(TEST_CASE_ID);
-        loggingContext.emit(asFunctionFile(message, rqFile, level, Calendar.getInstance().getTime()));
+        if (TEST_CASE_ID != null) {
+            byte[] fileContent = Files.readAllBytes(file.toPath());
+            SaveLogRQ.File rqFile = new SaveLogRQ.File();
+            rqFile.setContent(fileContent);
+            rqFile.setContentType(Files.probeContentType(file.toPath()));
+            rqFile.setName(UUID.randomUUID().toString());
+            LoggingContext loggingContext = CONTEXT_MAP.get(TEST_CASE_ID);
+            loggingContext.emit(asFunctionFile(message, rqFile, level, Calendar.getInstance().getTime()));
+        }
     }
 }
