@@ -42,8 +42,9 @@ import static com.epam.reportportal.utils.markdown.MarkdownUtils.asMarkdown;
  */
 public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl implements SoapUIService {
 
-	private static final Map<String, LoggingContext> CONTEXT_MAP = new ConcurrentHashMap<String, LoggingContext>();
+	public static final Map<String, LoggingContext> CONTEXT_MAP = new ConcurrentHashMap<String, LoggingContext>();
 	private static final String LEVEL_INFO = "INFO";
+	public static String TEST_CASE_ID;
 
 	public TestBasedSoapUIServiceImpl(ListenerParameters parameters, List<ResultLogger<?>> resultLoggers) {
 		super(parameters, resultLoggers);
@@ -58,19 +59,19 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
 		testCase.setPropertyValue(ID, toStringId(id));
 
 		LoggingContext loggingContext = LoggingContext.init(id, this.reportPortal.getClient());
-		CONTEXT_MAP.put(testCase.getId(), loggingContext);
+		CONTEXT_MAP.put(TEST_CASE_ID = testCase.getId(), loggingContext);
 	}
 
 	public void startTestStep(TestStep testStep, TestCaseRunContext context) {
 		String log = asMarkdown(String.format("# ===========STEP '%s' STARTED===========", testStep.getName()));
 
-		LoggingContext loggingContext = CONTEXT_MAP.get(testStep.getTestCase().getId());
+		LoggingContext loggingContext = CONTEXT_MAP.get(TEST_CASE_ID);
 		loggingContext.emit(asFunction(log, LEVEL_INFO, Calendar.getInstance().getTime()));
 	}
 
 	public void finishTestStep(TestStepResult testStepContext, TestCaseRunContext paramTestCaseRunContext) {
 
-		LoggingContext loggingContext = CONTEXT_MAP.get(testStepContext.getTestStep().getTestCase().getId());
+		LoggingContext loggingContext = CONTEXT_MAP.get(TEST_CASE_ID);
 		String logStepData = getLogStepData(testStepContext);
 		if (!Strings.isNullOrEmpty(logStepData)) {
 			loggingContext.emit(asFunction(logStepData, LEVEL_INFO, Calendar.getInstance().getTime()));
@@ -105,13 +106,13 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
 
 	@Override
 	public void finishTestCase(TestCaseRunner testCaseContext, PropertyExpansionContext propertyContext) {
-		CONTEXT_MAP.get(testCaseContext.getTestCase().getId()).completed().blockingAwait();
+		CONTEXT_MAP.get(TEST_CASE_ID).completed().blockingAwait();
 
 		super.finishTestCase(testCaseContext, propertyContext);
 
 	}
 
-	private Function<String, SaveLogRQ> asFunction(final String message, final String level, final Date time) {
+	public static Function<String, SaveLogRQ> asFunction(final String message, final String level, final Date time) {
 		return new Function<String, SaveLogRQ>() {
 			@Override
 			public SaveLogRQ apply(String id) {
@@ -124,6 +125,21 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
 				return rq;
 			}
 		};
+	}
 
+	public static Function<String, SaveLogRQ> asFunctionFile(final String message, final SaveLogRQ.File file, final String level, final Date time) {
+		return new Function<String, SaveLogRQ>() {
+			@Override
+			public SaveLogRQ apply(String id) {
+				SaveLogRQ rq = new SaveLogRQ();
+				rq.setLevel(level);
+				rq.setLogTime(time);
+				rq.setTestItemId(id);
+				rq.setMessage(message);
+				rq.setFile(file);
+
+				return rq;
+			}
+		};
 	}
 }
