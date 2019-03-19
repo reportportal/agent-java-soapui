@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 EPAM Systems
+ * Copyright (C) 2019 EPAM Systems
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,6 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 			Maybe<String> rs = this.launch.startTestItem(rq);
 			testSuite.setPropertyValue(ID, toStringId(rs));
 		}
-
 	}
 
 	public void finishTestSuite(TestSuiteRunner testSuiteContext) {
@@ -116,7 +115,6 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 
 			this.launch.finishTestItem(fromStringId(testSuiteContext.getTestSuite().getPropertyValue(ID)), rq);
 		}
-
 	}
 
 	public void startTestCase(TestCase testCase, PropertyExpansionContext propertyContext) {
@@ -138,7 +136,6 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 		} else {
 			return Maybe.empty();
 		}
-
 	}
 
 	public void finishTestCase(TestCaseRunner testCaseContext, PropertyExpansionContext propertyContext) {
@@ -148,7 +145,6 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 			rq.setStatus(TestStatus.fromSoapUI(testCaseContext.getStatus()));
 			this.launch.finishTestItem(fromStringId(testCaseContext.getTestCase().getPropertyValue(ID)), rq);
 		}
-
 	}
 
 	public void startTestStep(TestStep testStep, TestCaseRunContext context) {
@@ -165,7 +161,6 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 			Maybe<String> rs = this.launch.startTestItem(fromStringId(testStep.getTestCase().getPropertyValue(ID)), rq);
 			context.setProperty(ID, rs);
 		}
-
 	}
 
 	public void finishTestStep(TestStepResult testStepContext, TestCaseRunContext paramTestCaseRunContext) {
@@ -198,9 +193,7 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 			rq.setStatus(TestStatus.fromSoapUIStep(testStepContext.getStatus()));
 
 			this.launch.finishTestItem(testId, rq);
-
 		}
-
 	}
 
 	protected String getLogStepData(TestStepResult testStepContext) {
@@ -234,7 +227,6 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 			}
 			message = messages.toString();
 		}
-
 		return message;
 	}
 
@@ -255,6 +247,5 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 
 	protected synchronized Maybe<String> fromStringId(String tempId) {
 		return ITEMS.get(tempId);
-
 	}
 }

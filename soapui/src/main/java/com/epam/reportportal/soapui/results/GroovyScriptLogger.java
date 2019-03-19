@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 EPAM Systems
+ * Copyright (C) 2019 EPAM Systems
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,5 +43,4 @@ public class GroovyScriptLogger extends ResultLogger<TestStepResult> {
 	public boolean supports(TestStepResult result) {
 		return super.supports(result) && WsdlGroovyScriptTestStep.class.isAssignableFrom(result.getTestStep().getClass());
 	}
-
 }

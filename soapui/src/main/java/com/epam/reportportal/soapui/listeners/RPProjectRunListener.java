@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 EPAM Systems
+ * Copyright (C) 2019 EPAM Systems
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ public class RPProjectRunListener implements ProjectRunListener {
 		}
 		service.startLaunch();
 		context.setProperty(RP_SERVICE, service);
-
 	}
 
 	@Override
@@ -98,6 +97,5 @@ public class RPProjectRunListener implements ProjectRunListener {
 				}
 			}
 		}
-
 	}
 }
