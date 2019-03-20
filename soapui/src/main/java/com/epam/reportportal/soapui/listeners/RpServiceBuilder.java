@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 EPAM Systems
+ * Copyright (C) 2019 EPAM Systems
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,11 @@ import java.util.Properties;
 public class RpServiceBuilder {
 
 	private static final String REPORTER_TYPE_PROPERTY = "rp.reporter.type";
+	private static final String REPORTER_DISABLE_PROPERTY = "rp.reporter.disable";
+
+	public static Boolean REPORTER_DISABLE;
 
 	public static SoapUIService build(TestPropertyHolder contextProperties) {
-
 		Properties properties = convertProperties(contextProperties);
 
 		PropertiesLoader propertiesLoader = PropertiesLoader.load();
@@ -45,8 +47,13 @@ public class RpServiceBuilder {
 		List<ResultLogger<?>> resultLoggers = Arrays.asList(new HttpMessageExchangeLogger(), new GroovyScriptLogger());
 		String listenerType = properties.getProperty(REPORTER_TYPE_PROPERTY);
 
-		return ListenerType.fromString(listenerType).newOne(new ListenerParameters(propertiesLoader), resultLoggers);
+		REPORTER_DISABLE = false;
 
+		if (properties.getProperty(REPORTER_DISABLE_PROPERTY) != null) {
+			REPORTER_DISABLE = Boolean.valueOf(properties.getProperty(REPORTER_DISABLE_PROPERTY).toLowerCase());
+		}
+
+		return ListenerType.fromString(listenerType).newOne(new ListenerParameters(propertiesLoader), resultLoggers);
 	}
 
 	private static Properties convertProperties(TestPropertyHolder params) {
@@ -90,6 +97,5 @@ public class RpServiceBuilder {
 
 			return STEP_BASED;
 		}
-
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 EPAM Systems
+ * Copyright (C) 2019 EPAM Systems
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.epam.reportportal.soapui.service;
 
 import com.epam.reportportal.listeners.ListenerParameters;
 import com.epam.reportportal.service.LoggingContext;
+import com.epam.reportportal.soapui.listeners.RpServiceBuilder;
 import com.epam.reportportal.soapui.parameters.TestItemType;
 import com.epam.reportportal.soapui.parameters.TestStatus;
 import com.epam.reportportal.soapui.results.ResultLogger;
@@ -63,29 +64,31 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
 	}
 
 	public void startTestStep(TestStep testStep, TestCaseRunContext context) {
-		String log = asMarkdown(String.format("# ===========STEP '%s' STARTED===========", testStep.getName()));
+		if (!RpServiceBuilder.REPORTER_DISABLE) {
+			String log = asMarkdown(String.format("# ===========STEP '%s' STARTED===========", testStep.getName()));
 
-		LoggingContext loggingContext = CONTEXT_MAP.get(TEST_CASE_ID);
-		loggingContext.emit(asFunction(log, LEVEL_INFO, Calendar.getInstance().getTime()));
+			LoggingContext loggingContext = CONTEXT_MAP.get(TEST_CASE_ID);
+			loggingContext.emit(asFunction(log, LEVEL_INFO, Calendar.getInstance().getTime()));
+		}
 	}
 
 	public void finishTestStep(TestStepResult testStepContext, TestCaseRunContext paramTestCaseRunContext) {
-
 		LoggingContext loggingContext = CONTEXT_MAP.get(TEST_CASE_ID);
-		String logStepData = getLogStepData(testStepContext);
-		if (!Strings.isNullOrEmpty(logStepData)) {
-			loggingContext.emit(asFunction(logStepData, LEVEL_INFO, Calendar.getInstance().getTime()));
 
-		}
-
-		for (final SaveLogRQ rq : getStepLogReport(testStepContext)) {
-			loggingContext.emit(new Function<String, SaveLogRQ>() {
-				@Override
-				public SaveLogRQ apply(String id) {
-					rq.setTestItemId(id);
-					return rq;
-				}
-			});
+		if (!RpServiceBuilder.REPORTER_DISABLE) {
+			String logStepData = getLogStepData(testStepContext);
+			if (!Strings.isNullOrEmpty(logStepData)) {
+				loggingContext.emit(asFunction(logStepData, LEVEL_INFO, Calendar.getInstance().getTime()));
+			}
+			for (final SaveLogRQ rq : getStepLogReport(testStepContext)) {
+				loggingContext.emit(new Function<String, SaveLogRQ>() {
+					@Override
+					public SaveLogRQ apply(String id) {
+						rq.setTestItemId(id);
+						return rq;
+					}
+				});
+			}
 		}
 
 		if (TestStepResult.TestStepStatus.FAILED.equals(testStepContext.getStatus())) {
@@ -96,12 +99,13 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
 			context.setTestCanceled(true);
 		}
 
-		String log = asMarkdown(String.format("# ===========STEP '%s' %s===========",
-				testStepContext.getTestStep().getName(),
-				TestStatus.fromSoapUIStep(testStepContext.getStatus())
-		));
-		loggingContext.emit(asFunction(log, LEVEL_INFO, Calendar.getInstance().getTime()));
-
+		if (!RpServiceBuilder.REPORTER_DISABLE) {
+			String log = asMarkdown(String.format("# ===========STEP '%s' %s===========",
+					testStepContext.getTestStep().getName(),
+					TestStatus.fromSoapUIStep(testStepContext.getStatus())
+			));
+			loggingContext.emit(asFunction(log, LEVEL_INFO, Calendar.getInstance().getTime()));
+		}
 	}
 
 	@Override
@@ -109,7 +113,6 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
 		CONTEXT_MAP.get(TEST_CASE_ID).completed().blockingAwait();
 
 		super.finishTestCase(testCaseContext, propertyContext);
-
 	}
 
 	public static Function<String, SaveLogRQ> asFunction(final String message, final String level, final Date time) {
