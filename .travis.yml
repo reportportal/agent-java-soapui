@@ -1,11 +1,11 @@
 sudo: false
 language: java
+dist: trusty
 
 script: ./gradlew build
 
 jdk:
-    - oraclejdk8
-    - openjdk7
+    - openjdk8
 # Gradle requires JDK7 to build the project
 #    - openjdk6
 
