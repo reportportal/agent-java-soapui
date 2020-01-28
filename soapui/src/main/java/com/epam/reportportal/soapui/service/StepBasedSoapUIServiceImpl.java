@@ -39,8 +39,8 @@ import io.reactivex.Maybe;
 import rp.com.google.common.base.StandardSystemProperty;
 import rp.com.google.common.base.Strings;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -143,14 +143,6 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 			rq.setType(type.getValue());
 
 			String codeRef = getCodeRef(testCase);
-
-			try (PrintWriter printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(
-					"/Users/yumfriez/qwe/hello.txt")), StandardCharsets.UTF_8)))) {
-				printWriter.println("HEllo: " + codeRef);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
 			rq.setCodeRef(codeRef);
 			TestCaseIdEntry testCaseIdEntry = getTestCaseId(testCase.getProperties(), TEST_CASE_ID_PROPERTY, codeRef);
 			rq.setTestCaseId(testCaseIdEntry.getId());
