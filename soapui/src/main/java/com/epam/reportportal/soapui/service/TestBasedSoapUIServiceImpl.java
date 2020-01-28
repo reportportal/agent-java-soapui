@@ -25,7 +25,7 @@ import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import com.eviware.soapui.model.propertyexpansion.PropertyExpansionContext;
 import com.eviware.soapui.model.testsuite.*;
 import io.reactivex.Maybe;
-import rp.com.google.common.base.Function;
+import io.reactivex.schedulers.Schedulers;
 import rp.com.google.common.base.Strings;
 
 import java.util.Calendar;
@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import static com.epam.reportportal.utils.markdown.MarkdownUtils.asMarkdown;
 
@@ -53,13 +54,14 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
 
 	@Override
 	public void startTestCase(TestCase testCase, PropertyExpansionContext propertyContext) {
-		Maybe<String> id = startItem(testCase.getName(),
-				TestItemType.TEST_STEP,
-				fromStringId(testCase.getTestSuite().getPropertyValue(ID))
-		);
+		Maybe<String> id = startItem(testCase, TestItemType.TEST_STEP, fromStringId(testCase.getTestSuite().getPropertyValue(ID)));
 		testCase.setPropertyValue(ID, toStringId(id));
 
-		LoggingContext loggingContext = LoggingContext.init(id, this.reportPortal.getClient());
+		LoggingContext loggingContext = LoggingContext.init(launchId,
+				id,
+				this.reportPortal.getClient(),
+				Schedulers.from(this.reportPortal.getExecutor())
+		);
 		CONTEXT_MAP.put(TEST_CASE_ID = testCase.getId(), loggingContext);
 	}
 
@@ -81,12 +83,9 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
 				loggingContext.emit(asFunction(logStepData, LEVEL_INFO, Calendar.getInstance().getTime()));
 			}
 			for (final SaveLogRQ rq : getStepLogReport(testStepContext)) {
-				loggingContext.emit(new Function<String, SaveLogRQ>() {
-					@Override
-					public SaveLogRQ apply(String id) {
-						rq.setTestItemId(id);
-						return rq;
-					}
+				loggingContext.emit((Function<String, SaveLogRQ>) id -> {
+					rq.setItemUuid(id);
+					return rq;
 				});
 			}
 		}
@@ -116,33 +115,28 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
 	}
 
 	public static Function<String, SaveLogRQ> asFunction(final String message, final String level, final Date time) {
-		return new Function<String, SaveLogRQ>() {
-			@Override
-			public SaveLogRQ apply(String id) {
-				SaveLogRQ rq = new SaveLogRQ();
-				rq.setLevel(level);
-				rq.setLogTime(time);
-				rq.setTestItemId(id);
-				rq.setMessage(message);
+		return id -> {
+			SaveLogRQ rq = new SaveLogRQ();
+			rq.setLevel(level);
+			rq.setLogTime(time);
+			rq.setItemUuid(id);
+			rq.setMessage(message);
 
-				return rq;
-			}
+			return rq;
 		};
 	}
 
-	public static Function<String, SaveLogRQ> asFunctionFile(final String message, final SaveLogRQ.File file, final String level, final Date time) {
-		return new Function<String, SaveLogRQ>() {
-			@Override
-			public SaveLogRQ apply(String id) {
-				SaveLogRQ rq = new SaveLogRQ();
-				rq.setLevel(level);
-				rq.setLogTime(time);
-				rq.setTestItemId(id);
-				rq.setMessage(message);
-				rq.setFile(file);
+	public static Function<String, SaveLogRQ> asFunctionFile(final String message, final SaveLogRQ.File file, final String level,
+			final Date time) {
+		return id -> {
+			SaveLogRQ rq = new SaveLogRQ();
+			rq.setLevel(level);
+			rq.setLogTime(time);
+			rq.setItemUuid(id);
+			rq.setMessage(message);
+			rq.setFile(file);
 
-				return rq;
-			}
+			return rq;
 		};
 	}
 }

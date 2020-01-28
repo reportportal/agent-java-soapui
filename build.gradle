@@ -28,24 +28,25 @@ subprojects {
     apply plugin: 'com.jfrog.bintray'
 
 
-
     apply from: "${rootProject.projectDir}/quality.gradle"
     apply from: "${rootProject.projectDir}/release.gradle"
 
-    sourceCompatibility = 1.6
-    targetCompatibility = 1.6
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
 
 
     repositories {
         jcenter()
+        maven { url 'https://jitpack.io' }
         maven { url "http://dl.bintray.com/epam/reportportal" }
         maven { url "http://www.soapui.org/repository/maven2" }
     }
 
     dependencies {
         compileOnly 'log4j:log4j:1.2.17'
-        compile 'com.epam.reportportal:client-java:4.0.4'
-        compile 'com.epam.reportportal:logger-java-log4j:4.0.1'
+        compile 'com.github.reportportal:client-java:591b7b41'
+        compile 'com.github.reportportal:commons-model:feec39f3'
+        compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-8'
     }
 
 
