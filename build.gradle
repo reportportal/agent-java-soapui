@@ -20,6 +20,8 @@ allprojects {
     group = 'com.epam.reportportal'
 }
 
+project.ext.releaseMode = project.hasProperty('releaseMode')
+
 subprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
@@ -37,16 +39,23 @@ subprojects {
 
     repositories {
         jcenter()
-        maven { url 'https://jitpack.io' }
-        maven { url "http://dl.bintray.com/epam/reportportal" }
+        releaseMode ? maven { url "http://dl.bintray.com/epam/reportportal" } : maven { url "https://jitpack.io" }
         maven { url "http://www.soapui.org/repository/maven2" }
     }
 
+
     dependencies {
+        if (releaseMode) {
+            compile 'com.epam.reportportal:client-java:5.0.0-BETA-8'
+            compile 'com.epam.reportportal:commons-model:5.0.0'
+            compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-8'
+        } else {
+            compile 'com.github.reportportal:client-java:a560df17'
+            compile 'com.github.reportportal:commons-model:feec39f3'
+            compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-8'
+        }
+
         compileOnly 'log4j:log4j:1.2.17'
-        compile 'com.github.reportportal:client-java:a560df17'
-        compile 'com.github.reportportal:commons-model:feec39f3'
-        compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-8'
     }
 
 
