@@ -14,10 +14,8 @@ shadowJar {
     archiveName = "agent-java-${archiveName}"
 }
 
-task writeAgentProperties(type: WriteProperties) {
-    outputFile = file("${project.projectDir}/src/main/resources/agent.properties")
-    property('agent.name', project.rootProject.name)
-    property('agent.version', project.rootProject.version)
+processResources {
+    filesMatching('agent.properties') {
+        expand(project.properties)
+    }
 }
-
-compileJava.dependsOn writeAgentProperties
