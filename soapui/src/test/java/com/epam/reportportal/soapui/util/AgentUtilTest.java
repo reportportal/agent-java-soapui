@@ -19,7 +19,7 @@ public class AgentUtilTest {
 
 	private static final String AGENT_JAR_NAME_PROPERTY = "agent.jar.name";
 
-	private static final String DEFAULT_JAR_NAME = "agent-java-soapui.jar";
+	private static final String DEFAULT_JAR_NAME = "agent-java-soapui-testing.jar";
 	private static final String JAR_NAME = "soapui.jar";
 
 	private static final String AGENT_PROPERTIES_FILE = "agent.properties";

@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 public class SoapUiServiceTest {
 
 	private static final String AGENT_JAR_NAME_PROPERTY = "agent.jar.name";
-	private static final String JAR_NAME = "agent-java-soapui.jar";
+	private static final String JAR_NAME = "agent-java-soapui-testing.jar";
 	private static final String AGENT_PROPERTIES_FILE = "agent.properties";
 
 	private static final Map<String, Pattern> RESOLVED_PROPERTIES = new HashMap<>();

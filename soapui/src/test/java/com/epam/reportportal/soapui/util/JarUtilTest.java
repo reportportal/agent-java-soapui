@@ -13,7 +13,7 @@ import java.nio.file.Paths;
 public class JarUtilTest {
 
 	private static final String EXTENSION_FOLDER = "." + File.separator + "ext";
-	private static final String AGENT_JAR_NAME = "agent-java-soapui.jar";
+	private static final String AGENT_JAR_NAME = "agent-java-soapui-testing.jar";
 	private static final String AGENT_PROPERTIES_FILE = "agent.properties";
 
 	@Test

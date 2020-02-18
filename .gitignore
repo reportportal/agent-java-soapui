@@ -5,6 +5,7 @@
 
 # Package Files #
 *.jar
+!agent-java-soapui-testing.jar
 *.war
 *.ear
 !gradle/wrapper/**
