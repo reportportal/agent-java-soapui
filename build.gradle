@@ -49,11 +49,14 @@ subprojects {
             compile 'com.epam.reportportal:commons-model:5.0.0'
             compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-8'
         } else {
-            compile 'com.github.reportportal:client-java:591b7b41'
+            compile 'com.github.reportportal:client-java:dc4cb355'
             compile 'com.github.reportportal:commons-model:feec39f3'
             compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-8'
         }
         compileOnly 'log4j:log4j:1.2.17'
+        testCompile 'org.hamcrest:hamcrest-all:1.3'
+        testCompile 'junit:junit:4.12'
+        testCompile 'org.mockito:mockito-all:2.0.2-beta'
     }
 
 

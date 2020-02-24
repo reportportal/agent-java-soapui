@@ -30,7 +30,6 @@ import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
-import com.eviware.soapui.model.project.Project;
 import com.eviware.soapui.model.propertyexpansion.PropertyExpansionContext;
 import com.eviware.soapui.model.testsuite.*;
 import com.eviware.soapui.model.testsuite.TestRunner.Status;
@@ -85,10 +84,14 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 		rq.setMode(parameters.getLaunchRunningMode());
 		rq.setDescription(parameters.getDescription());
 
-		this.reportPortal = ReportPortal.builder().withParameters(parameters).build();
+		this.reportPortal = buildReportPortal(parameters);
 		this.launch = reportPortal.newLaunch(rq);
 		this.launchId = launch.start();
 		context.setLaunchFailed(false);
+	}
+
+	protected ReportPortal buildReportPortal(ListenerParameters parameters) {
+		return ReportPortal.builder().withParameters(parameters).build();
 	}
 
 	public void finishLaunch() {
@@ -111,6 +114,14 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 			rq.setName(testSuite.getName());
 			rq.setStartTime(Calendar.getInstance().getTime());
 			rq.setType(TestItemType.TEST_SUITE.getValue());
+
+			String codeRef = getCodeRef(testSuite);
+			rq.setCodeRef(codeRef);
+			TestCaseIdEntry testCaseIdEntry = getTestCaseId(testSuite.getProperties(), TEST_CASE_ID_PROPERTY, codeRef);
+			rq.setTestCaseId(testCaseIdEntry.getId());
+			rq.setTestCaseHash(testCaseIdEntry.getHash());
+
+			rq.setAttributes(getItemAttributes(testSuite.getProperties(), ITEM_ATTRIBUTES_PROPERTY));
 
 			Maybe<String> rs = this.launch.startTestItem(rq);
 			testSuite.setPropertyValue(ID, toStringId(rs));
@@ -197,10 +208,13 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 		}
 	}
 
+	protected String getCodeRef(TestSuite testSuite) {
+		return testSuite.getProject().getName() + CODE_REF_SEPARATOR + testSuite.getName();
+	}
+
 	protected String getCodeRef(TestCase testCase) {
-		TestSuite testSuite = testCase.getTestSuite();
-		Project project = testSuite.getProject();
-		return project.getName() + CODE_REF_SEPARATOR + testSuite.getName() + CODE_REF_SEPARATOR + testCase.getName();
+		String testSuiteCodeRef = getCodeRef(testCase.getTestSuite());
+		return testSuiteCodeRef + CODE_REF_SEPARATOR + testCase.getName();
 	}
 
 	protected String getCodeRef(TestStep testStep) {
