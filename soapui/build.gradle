@@ -9,8 +9,8 @@ dependencies {
         compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-8'
     }
 
-    compileOnly 'com.smartbear.soapui:soapui:5.4.0'
     compileOnly 'log4j:log4j:1.2.17'
+    compileOnly 'com.smartbear.soapui:soapui:5.5.0'
 }
 
 shadowJar {

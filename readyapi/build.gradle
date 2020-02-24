@@ -1,6 +1,7 @@
 dependencies {
-    compile project(':soapui')
-    compileOnly 'com.smartbear:ready-api-soapui-pro:2.6.0'
+    implementation project(':soapui')
+    compileOnly 'com.smartbear:ready-api-soapui-pro:2.8.0'
+    compileOnly 'com.smartbear.soapui:soapui:5.5.0'
 }
 
 shadowJar {
