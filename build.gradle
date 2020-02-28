@@ -43,6 +43,7 @@ subprojects {
         maven { url "http://www.soapui.org/repository/maven2" }
     }
 
+
     dependencies {
         if (releaseMode) {
             compile 'com.epam.reportportal:client-java:5.0.0-BETA-9'

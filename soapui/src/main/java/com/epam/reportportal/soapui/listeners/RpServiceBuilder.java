@@ -22,6 +22,7 @@ import com.epam.reportportal.soapui.results.ResultLogger;
 import com.epam.reportportal.soapui.service.SoapUIService;
 import com.epam.reportportal.soapui.service.StepBasedSoapUIServiceImpl;
 import com.epam.reportportal.soapui.service.TestBasedSoapUIServiceImpl;
+import com.epam.reportportal.soapui.util.AgentUtil;
 import com.epam.reportportal.utils.properties.PropertiesLoader;
 import com.eviware.soapui.model.TestPropertyHolder;
 import rp.com.google.common.base.Strings;
@@ -32,6 +33,7 @@ import java.util.Properties;
 
 public class RpServiceBuilder {
 
+	private static final String AGENT_PROPERTIES_FILE = "agent.properties";
 	private static final String REPORTER_TYPE_PROPERTY = "rp.reporter.type";
 	private static final String REPORTER_DISABLE_PROPERTY = "rp.reporter.disable";
 
@@ -53,7 +55,13 @@ public class RpServiceBuilder {
 			REPORTER_DISABLE = Boolean.valueOf(properties.getProperty(REPORTER_DISABLE_PROPERTY).toLowerCase());
 		}
 
-		return ListenerType.fromString(listenerType).newOne(new ListenerParameters(propertiesLoader), resultLoggers);
+		ListenerParameters listenerParameters = new ListenerParameters(propertiesLoader);
+
+		AgentUtil.resolveJarName(properties)
+				.ifPresent(agentJarName -> listenerParameters.getAttributes()
+						.addAll(AgentUtil.resolveSystemAttributes(agentJarName, AGENT_PROPERTIES_FILE)));
+
+		return ListenerType.fromString(listenerType).newOne(listenerParameters, resultLoggers);
 	}
 
 	private static Properties convertProperties(TestPropertyHolder params) {
