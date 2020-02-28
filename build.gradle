@@ -60,9 +60,6 @@ subprojects {
         testCompile 'org.mockito:mockito-all:2.0.2-beta'
     }
 
-        compileOnly 'log4j:log4j:1.2.17'
-    }
-
 
     //noinspection GroovyAssignabilityCheck
     task zip(type: Zip, overwrite: true) {
