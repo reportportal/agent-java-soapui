@@ -18,13 +18,16 @@ package com.epam.reportportal.soapui.service;
 import com.epam.reportportal.listeners.ListenerParameters;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
+import com.epam.reportportal.service.item.TestCaseIdEntry;
 import com.epam.reportportal.soapui.parameters.TestItemType;
 import com.epam.reportportal.soapui.parameters.TestStatus;
 import com.epam.reportportal.soapui.parameters.TestStepType;
 import com.epam.reportportal.soapui.results.ResultLogger;
+import com.epam.reportportal.utils.AttributeParser;
 import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
+import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import com.eviware.soapui.model.propertyexpansion.PropertyExpansionContext;
@@ -32,7 +35,6 @@ import com.eviware.soapui.model.testsuite.*;
 import com.eviware.soapui.model.testsuite.TestRunner.Status;
 import com.eviware.soapui.model.testsuite.TestStepResult.TestStepStatus;
 import io.reactivex.Maybe;
-import rp.com.google.common.base.Function;
 import rp.com.google.common.base.StandardSystemProperty;
 import rp.com.google.common.base.Strings;
 
@@ -40,6 +42,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * Default implementation of {@link StepBasedSoapUIServiceImpl}
@@ -51,6 +56,11 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 	private static final String LINE_SEPARATOR = StandardSystemProperty.LINE_SEPARATOR.value();
 	private static final Map<String, Maybe<String>> ITEMS = new ConcurrentHashMap<String, Maybe<String>>();
 	protected static final String ID = "rp_id";
+	protected static final String RP_PROPERTY_SEPARATOR = ".";
+	protected static final String ITEM_ATTRIBUTES_PROPERTY = "rp.item.attributes";
+	protected static final String TEST_CASE_ID_PROPERTY = "rp.case.id";
+	protected static final String CODE_REF_SEPARATOR = ".";
+	protected static final String RP_ITEM_PROPERTIES = "RP item properties";
 
 	protected final SoapUIContext context;
 	protected final ListenerParameters parameters;
@@ -58,6 +68,7 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 
 	protected ReportPortal reportPortal;
 	protected Launch launch;
+	protected Maybe<String> launchId;
 
 	public StepBasedSoapUIServiceImpl(ListenerParameters parameters, List<ResultLogger<?>> resultLoggers) {
 		this.context = new SoapUIContext();
@@ -69,13 +80,18 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 		StartLaunchRQ rq = new StartLaunchRQ();
 		rq.setName(this.parameters.getLaunchName());
 		rq.setStartTime(Calendar.getInstance().getTime());
-		rq.setTags(parameters.getTags());
+		rq.setAttributes(parameters.getAttributes());
 		rq.setMode(parameters.getLaunchRunningMode());
 		rq.setDescription(parameters.getDescription());
 
-		this.reportPortal = ReportPortal.builder().withParameters(parameters).build();
+		this.reportPortal = buildReportPortal(parameters);
 		this.launch = reportPortal.newLaunch(rq);
+		this.launchId = launch.start();
 		context.setLaunchFailed(false);
+	}
+
+	protected ReportPortal buildReportPortal(ListenerParameters parameters) {
+		return ReportPortal.builder().withParameters(parameters).build();
 	}
 
 	public void finishLaunch() {
@@ -99,6 +115,14 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 			rq.setStartTime(Calendar.getInstance().getTime());
 			rq.setType(TestItemType.TEST_SUITE.getValue());
 
+			String codeRef = getCodeRef(testSuite);
+			rq.setCodeRef(codeRef);
+			TestCaseIdEntry testCaseIdEntry = getTestCaseId(testSuite.getProperties(), TEST_CASE_ID_PROPERTY, codeRef);
+			rq.setTestCaseId(testCaseIdEntry.getId());
+			rq.setTestCaseHash(testCaseIdEntry.getHash());
+
+			rq.setAttributes(getItemAttributes(testSuite.getProperties(), ITEM_ATTRIBUTES_PROPERTY));
+
 			Maybe<String> rs = this.launch.startTestItem(rq);
 			testSuite.setPropertyValue(ID, toStringId(rs));
 		}
@@ -118,19 +142,24 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 	}
 
 	public void startTestCase(TestCase testCase, PropertyExpansionContext propertyContext) {
-		Maybe<String> id = startItem(testCase.getName(),
-				TestItemType.TEST_CASE,
-				fromStringId(testCase.getTestSuite().getPropertyValue(ID))
-		);
+		Maybe<String> id = startItem(testCase, TestItemType.TEST_CASE, fromStringId(testCase.getTestSuite().getPropertyValue(ID)));
 		testCase.setPropertyValue(ID, toStringId(id));
 	}
 
-	protected Maybe<String> startItem(String name, TestItemType type, Maybe<String> parentId) {
+	protected Maybe<String> startItem(TestCase testCase, TestItemType type, Maybe<String> parentId) {
 		if (null != launch) {
 			StartTestItemRQ rq = new StartTestItemRQ();
-			rq.setName(name);
+			rq.setName(testCase.getName());
 			rq.setStartTime(Calendar.getInstance().getTime());
 			rq.setType(type.getValue());
+
+			String codeRef = getCodeRef(testCase);
+			rq.setCodeRef(codeRef);
+			TestCaseIdEntry testCaseIdEntry = getTestCaseId(testCase.getProperties(), TEST_CASE_ID_PROPERTY, codeRef);
+			rq.setTestCaseId(testCaseIdEntry.getId());
+			rq.setTestCaseHash(testCaseIdEntry.getHash());
+
+			rq.setAttributes(getItemAttributes(testCase.getProperties(), ITEM_ATTRIBUTES_PROPERTY));
 
 			return this.launch.startTestItem(parentId, rq);
 		} else {
@@ -148,7 +177,7 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 	}
 
 	public void startTestStep(TestStep testStep, TestCaseRunContext context) {
-		if (null != launch) {
+		if (null != launch && !RP_ITEM_PROPERTIES.equals(testStep.getName())) {
 			if (testStep.getPropertyValue(ID) != null) {
 				return;
 			}
@@ -158,13 +187,59 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 			rq.setDescription(TestStepType.getStepType(testStep.getClass()));
 			rq.setStartTime(Calendar.getInstance().getTime());
 			rq.setType(TestItemType.TEST_STEP.getValue());
+
+			String codeRef = getCodeRef(testStep);
+			rq.setCodeRef(codeRef);
+			TestCaseIdEntry testCaseIdEntry = ofNullable(testStep.getTestCase().getTestStepByName(RP_ITEM_PROPERTIES)).map(
+					testCaseProperties -> getTestCaseId(testCaseProperties.getProperties(),
+							TEST_CASE_ID_PROPERTY + RP_PROPERTY_SEPARATOR + testStep.getName(),
+							codeRef
+					)).orElseGet(() -> new TestCaseIdEntry(codeRef, codeRef.hashCode()));
+			rq.setTestCaseId(testCaseIdEntry.getId());
+			rq.setTestCaseHash(testCaseIdEntry.getHash());
+
+			ofNullable(testStep.getTestCase().getTestStepByName(RP_ITEM_PROPERTIES)).ifPresent(stepProperties -> rq.setAttributes(
+					getItemAttributes(stepProperties.getProperties(),
+							ITEM_ATTRIBUTES_PROPERTY + RP_PROPERTY_SEPARATOR + testStep.getName()
+					)));
+
 			Maybe<String> rs = this.launch.startTestItem(fromStringId(testStep.getTestCase().getPropertyValue(ID)), rq);
 			context.setProperty(ID, rs);
 		}
 	}
 
+	protected String getCodeRef(TestSuite testSuite) {
+		return testSuite.getProject().getName() + CODE_REF_SEPARATOR + testSuite.getName();
+	}
+
+	protected String getCodeRef(TestCase testCase) {
+		String testSuiteCodeRef = getCodeRef(testCase.getTestSuite());
+		return testSuiteCodeRef + CODE_REF_SEPARATOR + testCase.getName();
+	}
+
+	protected String getCodeRef(TestStep testStep) {
+		String testCaseCodeRef = getCodeRef(testStep.getTestCase());
+		return testCaseCodeRef + CODE_REF_SEPARATOR + testStep.getName();
+	}
+
+	protected TestCaseIdEntry getTestCaseId(Map<String, TestProperty> properties, String testCaseIdPropertyKey, String codeRef) {
+		return retrieveProperty(properties, testCaseIdPropertyKey).map(testCaseId -> new TestCaseIdEntry(testCaseId.getValue(),
+				Objects.hashCode(testCaseId.getValue())
+		)).orElseGet(() -> new TestCaseIdEntry(codeRef, codeRef.hashCode()));
+	}
+
+	protected Set<ItemAttributesRQ> getItemAttributes(Map<String, TestProperty> properties, String attributesPropertyKey) {
+		return retrieveProperty(properties, attributesPropertyKey).map(TestProperty::getValue)
+				.map(AttributeParser::parseAsSet)
+				.orElseGet(Collections::emptySet);
+	}
+
+	private Optional<TestProperty> retrieveProperty(Map<String, TestProperty> properties, String propertyKey) {
+		return ofNullable(properties.get(propertyKey));
+	}
+
 	public void finishTestStep(TestStepResult testStepContext, TestCaseRunContext paramTestCaseRunContext) {
-		if (null != launch) {
+		if (null != launch && !RP_ITEM_PROPERTIES.equals(testStepContext.getTestStep().getName())) {
 			Maybe<String> testId = (Maybe<String>) paramTestCaseRunContext.getProperty(ID);
 
 			String logStepData = getLogStepData(testStepContext);
@@ -172,12 +247,9 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 				ReportPortal.emitLog(logStepData, "INFO", Calendar.getInstance().getTime());
 			}
 			for (final SaveLogRQ rq : getStepLogReport(testStepContext)) {
-				ReportPortal.emitLog(new Function<String, SaveLogRQ>() {
-					@Override
-					public SaveLogRQ apply(String id) {
-						rq.setTestItemId(id);
-						return rq;
-					}
+				ReportPortal.emitLog((Function<String, SaveLogRQ>) id -> {
+					rq.setItemUuid(id);
+					return rq;
 				});
 			}
 
