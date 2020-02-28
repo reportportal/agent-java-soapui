@@ -3,9 +3,9 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.3'
-        classpath 'net.researchgate:gradle-release:2.6.0'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
+        classpath 'net.researchgate:gradle-release:2.8.0'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:5.1.0'
     }
 }
 
@@ -46,14 +46,19 @@ subprojects {
 
     dependencies {
         if (releaseMode) {
-            compile 'com.epam.reportportal:client-java:5.0.0-BETA-8'
+            compile 'com.epam.reportportal:client-java:5.0.0-BETA-9'
             compile 'com.epam.reportportal:commons-model:5.0.0'
-            compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-8'
+            compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-9'
         } else {
-            compile 'com.github.reportportal:client-java:a560df17'
+            compile 'com.github.reportportal:client-java:dc4cb355'
             compile 'com.github.reportportal:commons-model:feec39f3'
-            compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-8'
+            compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-9'
         }
+        compileOnly 'log4j:log4j:1.2.17'
+        testCompile 'org.hamcrest:hamcrest-all:1.3'
+        testCompile 'junit:junit:4.12'
+        testCompile 'org.mockito:mockito-all:2.0.2-beta'
+    }
 
         compileOnly 'log4j:log4j:1.2.17'
     }
@@ -74,9 +79,4 @@ subprojects {
         })
     }
     build.dependsOn zip
-}
-
-//noinspection GroovyAssignabilityCheck
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.6'
 }
