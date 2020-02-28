@@ -1,12 +1,12 @@
 dependencies {
     if (releaseMode) {
-        compile 'com.epam.reportportal:client-java:5.0.0-BETA-8'
+        compile 'com.epam.reportportal:client-java:5.0.0-BETA-9'
         compile 'com.epam.reportportal:commons-model:5.0.0'
-        compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-8'
+        compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-9'
     } else {
         compile 'com.github.reportportal:client-java:591b7b41'
         compile 'com.github.reportportal:commons-model:feec39f3'
-        compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-8'
+        compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-9'
     }
 
     compileOnly 'log4j:log4j:1.2.17'
