@@ -14,13 +14,13 @@
 * Unpack ./build/distributions/agent-java-soapui-full.zip
 * Copy JAR file to soapUI's ext folder and listeners folder to the soapUI installation root.
 For example, MacOS paths would be:
-* `/Applications/SoapUI-5.4.0.app/Contains/java/app/bin/ext` for JAR library
-* `/Applications/SoapUI-5.4.0.app/Contains/java/app/bin/listeners` for listeners
+* `/Applications/SoapUI-5.5.0.app/Contains/java/app/bin/ext` for JAR library
+* `/Applications/SoapUI-5.5.0.app/Contains/java/app/bin/listeners` for listeners
 
 Add necessary properties to your project (as custom properties). For example:
 ```
 rp.endpoint=https://rp.epam.com
-rp.uuid={YOUR_TOKEN}
+rp.api.key={YOUR_TOKEN}
 rp.project={YOUR_PROJECT}
 rp.launch={NAME_OF_YOUR_LAUNCH}
 ```
