@@ -2,7 +2,7 @@ sudo: false
 language: java
 dist: trusty
 
-script: ./gradlew build
+script: ./gradlew build --debug
 
 jdk:
     - openjdk8
