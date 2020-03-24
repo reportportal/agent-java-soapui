@@ -59,7 +59,7 @@ public class SoapUiServiceTest {
 		StepBasedSoapUIServiceImpl soapUIService = (StepBasedSoapUIServiceImpl) RpServiceBuilder.build(testPropertyHolder);
 		Set<ItemAttributesRQ> attributes = soapUIService.parameters.getAttributes();
 		Assert.assertNotNull(attributes);
-		Assert.assertEquals(2, attributes.size());
+		Assert.assertEquals(3, attributes.size());
 		attributes.forEach(attribute -> {
 			Assert.assertTrue(attribute.isSystem());
 
