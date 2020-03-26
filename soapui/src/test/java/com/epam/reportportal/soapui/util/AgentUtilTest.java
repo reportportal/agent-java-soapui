@@ -68,7 +68,7 @@ public class AgentUtilTest {
 	public void resolveSystemAttributes() {
 		Set<ItemAttributesRQ> attributes = AgentUtil.resolveSystemAttributes(DEFAULT_JAR_NAME, AGENT_PROPERTIES_FILE);
 		Assert.assertNotNull(attributes);
-		Assert.assertEquals(2, attributes.size());
+		Assert.assertEquals(3, attributes.size());
 		attributes.forEach(attribute -> {
 			Assert.assertTrue(attribute.isSystem());
 
