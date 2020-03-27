@@ -119,7 +119,6 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 			rq.setCodeRef(codeRef);
 			TestCaseIdEntry testCaseIdEntry = getTestCaseId(testSuite.getProperties(), TEST_CASE_ID_PROPERTY, codeRef);
 			rq.setTestCaseId(testCaseIdEntry.getId());
-			rq.setTestCaseHash(testCaseIdEntry.getHash());
 
 			rq.setAttributes(getItemAttributes(testSuite.getProperties(), ITEM_ATTRIBUTES_PROPERTY));
 
@@ -157,7 +156,6 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 			rq.setCodeRef(codeRef);
 			TestCaseIdEntry testCaseIdEntry = getTestCaseId(testCase.getProperties(), TEST_CASE_ID_PROPERTY, codeRef);
 			rq.setTestCaseId(testCaseIdEntry.getId());
-			rq.setTestCaseHash(testCaseIdEntry.getHash());
 
 			rq.setAttributes(getItemAttributes(testCase.getProperties(), ITEM_ATTRIBUTES_PROPERTY));
 
@@ -194,9 +192,8 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 					testCaseProperties -> getTestCaseId(testCaseProperties.getProperties(),
 							TEST_CASE_ID_PROPERTY + RP_PROPERTY_SEPARATOR + testStep.getName(),
 							codeRef
-					)).orElseGet(() -> new TestCaseIdEntry(codeRef, codeRef.hashCode()));
+					)).orElseGet(() -> new TestCaseIdEntry(codeRef));
 			rq.setTestCaseId(testCaseIdEntry.getId());
-			rq.setTestCaseHash(testCaseIdEntry.getHash());
 
 			ofNullable(testStep.getTestCase().getTestStepByName(RP_ITEM_PROPERTIES)).ifPresent(stepProperties -> rq.setAttributes(
 					getItemAttributes(stepProperties.getProperties(),
@@ -223,9 +220,8 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 	}
 
 	protected TestCaseIdEntry getTestCaseId(Map<String, TestProperty> properties, String testCaseIdPropertyKey, String codeRef) {
-		return retrieveProperty(properties, testCaseIdPropertyKey).map(testCaseId -> new TestCaseIdEntry(testCaseId.getValue(),
-				Objects.hashCode(testCaseId.getValue())
-		)).orElseGet(() -> new TestCaseIdEntry(codeRef, codeRef.hashCode()));
+		return retrieveProperty(properties, testCaseIdPropertyKey).map(testCaseId -> new TestCaseIdEntry(testCaseId.getValue())).
+				orElseGet(() -> new TestCaseIdEntry(codeRef));
 	}
 
 	protected Set<ItemAttributesRQ> getItemAttributes(Map<String, TestProperty> properties, String attributesPropertyKey) {
