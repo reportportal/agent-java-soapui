@@ -117,8 +117,6 @@ public class StepBasedSoapUIServiceImplTest {
 		Assert.assertEquals(SUITE_NAME, request.getName());
 		Assert.assertEquals(SUITE_CODE_REF, request.getCodeRef());
 		Assert.assertEquals(SUITE_CODE_REF, request.getTestCaseId());
-		Assert.assertEquals(SUITE_CODE_REF.hashCode(), (int) request.getTestCaseHash());
-
 	}
 
 	@Test
@@ -152,7 +150,6 @@ public class StepBasedSoapUIServiceImplTest {
 		Assert.assertEquals(SUITE_NAME, request.getName());
 		Assert.assertEquals(SUITE_CODE_REF, request.getCodeRef());
 		Assert.assertEquals(customTestCaseId, request.getTestCaseId());
-		Assert.assertEquals(customTestCaseId.hashCode(), (int) request.getTestCaseHash());
 
 	}
 
@@ -182,8 +179,6 @@ public class StepBasedSoapUIServiceImplTest {
 		Assert.assertEquals(TEST_CASE_NAME, request.getName());
 		Assert.assertEquals(TEST_CASE_CODE_REF, request.getCodeRef());
 		Assert.assertEquals(TEST_CASE_CODE_REF, request.getTestCaseId());
-		Assert.assertEquals(TEST_CASE_CODE_REF.hashCode(), (int) request.getTestCaseHash());
-
 	}
 
 	@Test
@@ -220,8 +215,6 @@ public class StepBasedSoapUIServiceImplTest {
 		Assert.assertEquals(TEST_CASE_NAME, request.getName());
 		Assert.assertEquals(TEST_CASE_CODE_REF, request.getCodeRef());
 		Assert.assertEquals(customTestCaseId, request.getTestCaseId());
-		Assert.assertEquals(customTestCaseId.hashCode(), (int) request.getTestCaseHash());
-
 	}
 
 	@Test
@@ -262,8 +255,6 @@ public class StepBasedSoapUIServiceImplTest {
 		Assert.assertEquals(TEST_STEP_NAME, request.getName());
 		Assert.assertEquals(TEST_STEP_CODE_REF, request.getCodeRef());
 		Assert.assertEquals(TEST_STEP_CODE_REF, request.getTestCaseId());
-		Assert.assertEquals(TEST_STEP_CODE_REF.hashCode(), (int) request.getTestCaseHash());
-
 	}
 
 	@Test
@@ -313,7 +304,6 @@ public class StepBasedSoapUIServiceImplTest {
 		Assert.assertEquals(TEST_STEP_NAME, request.getName());
 		Assert.assertEquals(TEST_STEP_CODE_REF, request.getCodeRef());
 		Assert.assertEquals(customTestCaseId, request.getTestCaseId());
-		Assert.assertEquals(customTestCaseId.hashCode(), (int) request.getTestCaseHash());
 
 	}
 

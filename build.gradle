@@ -50,7 +50,7 @@ subprojects {
             compile 'com.epam.reportportal:commons-model:5.0.0'
             compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-9'
         } else {
-            compile 'com.github.reportportal:client-java:c9b0e06'
+            compile 'com.github.reportportal:client-java:8825155'
             compile 'com.github.reportportal:commons-model:feec39f3'
             compile 'com.epam.reportportal:logger-java-log4j:5.0.0-BETA-9'
         }
