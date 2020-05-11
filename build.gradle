@@ -13,10 +13,7 @@ description = 'EPAM Report portal. SoapUI client API'
 
 
 allprojects {
-
-
     apply plugin: 'java'
-
     group = 'com.epam.reportportal'
 }
 
@@ -40,7 +37,7 @@ subprojects {
     repositories {
         jcenter()
         releaseMode ? maven { url "http://dl.bintray.com/epam/reportportal" } : maven { url "https://jitpack.io" }
-        maven { url "http://www.soapui.org/repository/maven2" }
+        maven { url "https://www.soapui.org/repository/maven2" }
     }
 
 
@@ -68,7 +65,7 @@ subprojects {
     //noinspection GroovyAssignabilityCheck
     task zip(type: Zip, overwrite: true) {
         def path = "${project.projectDir}/src/main/resources/"
-        classifier = 'full'
+        archiveClassifier.set('full')
         from shadowJar.outputs.files
         from(path, {
             include 'soapui-log4j.xml'
