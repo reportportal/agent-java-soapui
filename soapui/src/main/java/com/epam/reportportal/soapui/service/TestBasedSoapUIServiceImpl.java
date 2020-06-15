@@ -44,99 +44,99 @@ import static com.epam.reportportal.utils.markdown.MarkdownUtils.asMarkdown;
  */
 public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl implements SoapUIService {
 
-	public static final Map<String, LoggingContext> CONTEXT_MAP = new ConcurrentHashMap<String, LoggingContext>();
-	private static final String LEVEL_INFO = "INFO";
-	public static String TEST_CASE_ID;
+    public static final Map<String, LoggingContext> CONTEXT_MAP = new ConcurrentHashMap<String, LoggingContext>();
+    private static final String LEVEL_INFO = "INFO";
+    public static String TEST_CASE_ID;
 
-	public TestBasedSoapUIServiceImpl(ListenerParameters parameters, List<ResultLogger<?>> resultLoggers) {
-		super(parameters, resultLoggers);
-	}
+    public TestBasedSoapUIServiceImpl(ListenerParameters parameters, List<ResultLogger<?>> resultLoggers) {
+        super(parameters, resultLoggers);
+    }
 
-	@Override
-	public void startTestCase(TestCase testCase, PropertyExpansionContext propertyContext) {
-		Maybe<String> id = startItem(testCase, TestItemType.TEST_STEP, fromStringId(testCase.getTestSuite().getPropertyValue(ID)));
-		testCase.setPropertyValue(ID, toStringId(id));
+    @Override
+    public void startTestCase(TestCase testCase, PropertyExpansionContext propertyContext) {
+        Maybe<String> id = startItem(testCase, TestItemType.TEST_STEP, fromStringId(testCase.getTestSuite().getPropertyValue(ID)));
+        testCase.setPropertyValue(ID, toStringId(id));
 
-		LoggingContext loggingContext = LoggingContext.init(launchId,
-				id,
-				this.reportPortal.getClient(),
-				Schedulers.from(this.reportPortal.getExecutor())
-		);
-		CONTEXT_MAP.put(TEST_CASE_ID = testCase.getId(), loggingContext);
-	}
+        LoggingContext loggingContext = LoggingContext.init(launchId,
+                id,
+                reportPortal.getClient(),
+                Schedulers.from(executor)
+        );
+        CONTEXT_MAP.put(TEST_CASE_ID = testCase.getId(), loggingContext);
+    }
 
-	public void startTestStep(TestStep testStep, TestCaseRunContext context) {
-		if (!RpServiceBuilder.REPORTER_DISABLE) {
-			String log = asMarkdown(String.format("# ===========STEP '%s' STARTED===========", testStep.getName()));
+    public void startTestStep(TestStep testStep, TestCaseRunContext context) {
+        if (!RpServiceBuilder.REPORTER_DISABLE) {
+            String log = asMarkdown(String.format("# ===========STEP '%s' STARTED===========", testStep.getName()));
 
-			LoggingContext loggingContext = CONTEXT_MAP.get(TEST_CASE_ID);
-			loggingContext.emit(asFunction(log, LEVEL_INFO, Calendar.getInstance().getTime()));
-		}
-	}
+            LoggingContext loggingContext = CONTEXT_MAP.get(TEST_CASE_ID);
+            loggingContext.emit(asFunction(log, LEVEL_INFO, Calendar.getInstance().getTime()));
+        }
+    }
 
-	public void finishTestStep(TestStepResult testStepContext, TestCaseRunContext paramTestCaseRunContext) {
-		LoggingContext loggingContext = CONTEXT_MAP.get(TEST_CASE_ID);
+    public void finishTestStep(TestStepResult testStepContext, TestCaseRunContext paramTestCaseRunContext) {
+        LoggingContext loggingContext = CONTEXT_MAP.get(TEST_CASE_ID);
 
-		if (!RpServiceBuilder.REPORTER_DISABLE) {
-			String logStepData = getLogStepData(testStepContext);
-			if (!Strings.isNullOrEmpty(logStepData)) {
-				loggingContext.emit(asFunction(logStepData, LEVEL_INFO, Calendar.getInstance().getTime()));
-			}
-			for (final SaveLogRQ rq : getStepLogReport(testStepContext)) {
-				loggingContext.emit((Function<String, SaveLogRQ>) id -> {
-					rq.setItemUuid(id);
-					return rq;
-				});
-			}
-		}
+        if (!RpServiceBuilder.REPORTER_DISABLE) {
+            String logStepData = getLogStepData(testStepContext);
+            if (!Strings.isNullOrEmpty(logStepData)) {
+                loggingContext.emit(asFunction(logStepData, LEVEL_INFO, Calendar.getInstance().getTime()));
+            }
+            for (final SaveLogRQ rq : getStepLogReport(testStepContext)) {
+                loggingContext.emit((Function<String, SaveLogRQ>) id -> {
+                    rq.setItemUuid(id);
+                    return rq;
+                });
+            }
+        }
 
-		if (TestStepResult.TestStepStatus.FAILED.equals(testStepContext.getStatus())) {
-			loggingContext.emit(asFunction(getStepError(testStepContext), "ERROR", Calendar.getInstance().getTime()));
-		}
+        if (TestStepResult.TestStepStatus.FAILED.equals(testStepContext.getStatus())) {
+            loggingContext.emit(asFunction(getStepError(testStepContext), "ERROR", Calendar.getInstance().getTime()));
+        }
 
-		if (TestStepResult.TestStepStatus.CANCELED.equals(testStepContext.getStatus())) {
-			context.setTestCanceled(true);
-		}
+        if (TestStepResult.TestStepStatus.CANCELED.equals(testStepContext.getStatus())) {
+            context.setTestCanceled(true);
+        }
 
-		if (!RpServiceBuilder.REPORTER_DISABLE) {
-			String log = asMarkdown(String.format("# ===========STEP '%s' %s===========",
-					testStepContext.getTestStep().getName(),
-					TestStatus.fromSoapUIStep(testStepContext.getStatus())
-			));
-			loggingContext.emit(asFunction(log, LEVEL_INFO, Calendar.getInstance().getTime()));
-		}
-	}
+        if (!RpServiceBuilder.REPORTER_DISABLE) {
+            String log = asMarkdown(String.format("# ===========STEP '%s' %s===========",
+                    testStepContext.getTestStep().getName(),
+                    TestStatus.fromSoapUIStep(testStepContext.getStatus())
+            ));
+            loggingContext.emit(asFunction(log, LEVEL_INFO, Calendar.getInstance().getTime()));
+        }
+    }
 
-	@Override
-	public void finishTestCase(TestCaseRunner testCaseContext, PropertyExpansionContext propertyContext) {
-		CONTEXT_MAP.get(TEST_CASE_ID).completed().blockingAwait();
+    @Override
+    public void finishTestCase(TestCaseRunner testCaseContext, PropertyExpansionContext propertyContext) {
+        CONTEXT_MAP.get(TEST_CASE_ID).completed().blockingAwait();
 
-		super.finishTestCase(testCaseContext, propertyContext);
-	}
+        super.finishTestCase(testCaseContext, propertyContext);
+    }
 
-	public static Function<String, SaveLogRQ> asFunction(final String message, final String level, final Date time) {
-		return id -> {
-			SaveLogRQ rq = new SaveLogRQ();
-			rq.setLevel(level);
-			rq.setLogTime(time);
-			rq.setItemUuid(id);
-			rq.setMessage(message);
+    public static Function<String, SaveLogRQ> asFunction(final String message, final String level, final Date time) {
+        return id -> {
+            SaveLogRQ rq = new SaveLogRQ();
+            rq.setLevel(level);
+            rq.setLogTime(time);
+            rq.setItemUuid(id);
+            rq.setMessage(message);
 
-			return rq;
-		};
-	}
+            return rq;
+        };
+    }
 
-	public static Function<String, SaveLogRQ> asFunctionFile(final String message, final SaveLogRQ.File file, final String level,
-			final Date time) {
-		return id -> {
-			SaveLogRQ rq = new SaveLogRQ();
-			rq.setLevel(level);
-			rq.setLogTime(time);
-			rq.setItemUuid(id);
-			rq.setMessage(message);
-			rq.setFile(file);
+    public static Function<String, SaveLogRQ> asFunctionFile(final String message, final SaveLogRQ.File file, final String level,
+                                                             final Date time) {
+        return id -> {
+            SaveLogRQ rq = new SaveLogRQ();
+            rq.setLevel(level);
+            rq.setLogTime(time);
+            rq.setItemUuid(id);
+            rq.setMessage(message);
+            rq.setFile(file);
 
-			return rq;
-		};
-	}
+            return rq;
+        };
+    }
 }

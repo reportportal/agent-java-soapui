@@ -1,14 +1,14 @@
 dependencies {
     if (releaseMode) {
-        compile 'com.epam.reportportal:client-java:5.0.0-RC-1'
+        compile 'com.epam.reportportal:client-java:5.0.1'
         compile 'com.epam.reportportal:commons-model:5.0.0'
-        compile('com.epam.reportportal:logger-java-log4j:5.0.0-RC-1') {
+        compile('com.epam.reportportal:logger-java-log4j:5.0.1') {
             exclude module: 'client-java'
         }
     } else {
-        compile 'com.epam.reportportal:client-java:5.0.0-RC-1'
+        compile 'com.epam.reportportal:client-java:5.0.1'
         compile 'com.epam.reportportal:commons-model:5.0.0'
-        compile('com.epam.reportportal:logger-java-log4j:5.0.0-RC-1') {
+        compile('com.epam.reportportal:logger-java-log4j:5.0.1') {
             exclude module: 'client-java'
         }
     }
