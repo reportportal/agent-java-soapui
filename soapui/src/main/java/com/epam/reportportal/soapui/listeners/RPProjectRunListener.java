@@ -34,7 +34,7 @@ public class RPProjectRunListener implements ProjectRunListener {
 
 	public static final String APPENDER_NAME = "ReportPortalAppender";
 	public static final String BASE_APPENDER_NAME = "REPORTPORTAL";
-	static final String RP_SERVICE = "rp_service";
+	public static final String RP_SERVICE = "rp_service";
 
 	private SoapUIService service;
 
