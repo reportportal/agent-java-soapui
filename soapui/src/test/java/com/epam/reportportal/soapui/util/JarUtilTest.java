@@ -1,7 +1,7 @@
 package com.epam.reportportal.soapui.util;
 
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;

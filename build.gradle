@@ -40,28 +40,6 @@ subprojects {
         maven { url "https://www.soapui.org/repository/maven2" }
     }
 
-
-    dependencies {
-        if (releaseMode) {
-            compile 'com.epam.reportportal:client-java:5.0.0-BETA-17'
-            compile 'com.epam.reportportal:commons-model:5.0.0'
-            compile('com.epam.reportportal:logger-java-log4j:5.0.0-BETA-9') {
-                exclude module: 'client-java'
-            }
-        } else {
-            compile 'com.epam.reportportal:client-java:5.0.0-BETA-17'
-            compile 'com.epam.reportportal:commons-model:5.0.0'
-            compile('com.epam.reportportal:logger-java-log4j:5.0.0-BETA-9') {
-                exclude module: 'client-java'
-            }
-        }
-        compileOnly 'log4j:log4j:1.2.17'
-        testCompile 'org.hamcrest:hamcrest-all:1.3'
-        testCompile 'junit:junit:4.12'
-        testCompile 'org.mockito:mockito-all:2.0.2-beta'
-    }
-
-
     //noinspection GroovyAssignabilityCheck
     task zip(type: Zip, overwrite: true) {
         def path = "${project.projectDir}/src/main/resources/"

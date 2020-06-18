@@ -3,9 +3,11 @@ package com.epam.reportportal.soapui.service;
 import com.epam.reportportal.soapui.listeners.RpServiceBuilder;
 import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.eviware.soapui.model.TestPropertyHolder;
-import org.junit.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +17,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import static java.util.Optional.ofNullable;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.when;
 
 /**
@@ -31,22 +35,21 @@ public class SoapUiServiceTest {
 	@Mock
 	private TestPropertyHolder testPropertyHolder;
 
-	@BeforeClass
+	@BeforeAll
 	public static void initKeys() {
 		RESOLVED_PROPERTIES.put("os", Pattern.compile("^.+\\|.+\\|.+$"));
 		RESOLVED_PROPERTIES.put("jvm", Pattern.compile("^.+\\|.+\\|.+$"));
 		RESOLVED_PROPERTIES.put("agent", Pattern.compile("^test-agent\\|test-1\\.0$"));
 	}
 
-	@Before
+	@BeforeEach
 	public void init() {
-		MockitoAnnotations.initMocks(this);
-		when(testPropertyHolder.getPropertyNames()).thenReturn(new String[] { JAR_NAME });
+		when(testPropertyHolder.getPropertyNames()).thenReturn(new String[] { AGENT_JAR_NAME_PROPERTY });
 		when(testPropertyHolder.getPropertyValue(AGENT_JAR_NAME_PROPERTY)).thenReturn(JAR_NAME);
 
 	}
 
-	@After
+	@AfterEach
 	public void cleanUp() {
 		File file = new File("." + File.separator + "/ext/" + AGENT_PROPERTIES_FILE);
 		if (file.exists()) {
@@ -58,14 +61,14 @@ public class SoapUiServiceTest {
 	public void test() throws IOException {
 		StepBasedSoapUIServiceImpl soapUIService = (StepBasedSoapUIServiceImpl) RpServiceBuilder.build(testPropertyHolder);
 		Set<ItemAttributesRQ> attributes = soapUIService.parameters.getAttributes();
-		Assert.assertNotNull(attributes);
-		Assert.assertEquals(3, attributes.size());
+		assertThat(attributes, notNullValue());
+		assertThat(attributes, hasSize(3));
 		attributes.forEach(attribute -> {
-			Assert.assertTrue(attribute.isSystem());
+			assertThat(attribute.isSystem(), equalTo(Boolean.TRUE));
 
 			Pattern pattern = getPattern(attribute);
-			Assert.assertNotNull(pattern);
-			Assert.assertTrue(pattern.matcher(attribute.getValue()).matches());
+			assertThat(pattern, notNullValue());
+			assertThat(attribute.getValue(), matchesPattern(pattern));
 		});
 
 	}

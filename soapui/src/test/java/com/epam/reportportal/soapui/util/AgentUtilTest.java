@@ -1,7 +1,10 @@
 package com.epam.reportportal.soapui.util;
 
 import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
-import org.junit.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -10,6 +13,8 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import static java.util.Optional.ofNullable;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.when;
 
 /**
@@ -29,19 +34,19 @@ public class AgentUtilTest {
 	@Mock
 	private Properties properties;
 
-	@BeforeClass
+	@BeforeAll
 	public static void initKeys() {
 		RESOLVED_PROPERTIES.put("os", Pattern.compile("^.+\\|.+\\|.+$"));
 		RESOLVED_PROPERTIES.put("jvm", Pattern.compile("^.+\\|.+\\|.+$"));
 		RESOLVED_PROPERTIES.put("agent", Pattern.compile("^test-agent\\|test-1\\.0$"));
 	}
 
-	@Before
+	@BeforeEach
 	public void init() {
 		MockitoAnnotations.initMocks(this);
 	}
 
-	@After
+	@AfterEach
 	public void cleanUp() {
 		File file = new File("." + File.separator + "/ext/" + AGENT_PROPERTIES_FILE);
 		if (file.exists()) {
@@ -53,28 +58,28 @@ public class AgentUtilTest {
 	public void resolveJarNameFromProperties() {
 		when(properties.getProperty(AGENT_JAR_NAME_PROPERTY)).thenReturn(JAR_NAME);
 		Optional<String> jarName = AgentUtil.resolveJarName(properties);
-		Assert.assertTrue(jarName.isPresent());
-		Assert.assertEquals(JAR_NAME, jarName.get());
+		assertThat(jarName.isPresent(), equalTo(Boolean.TRUE));
+		assertThat(jarName.get(), equalTo(JAR_NAME));
 	}
 
 	@Test
 	public void resolveDefaultJarName() {
 		Optional<String> jarName = AgentUtil.resolveJarName(properties);
-		Assert.assertTrue(jarName.isPresent());
-		Assert.assertEquals(DEFAULT_JAR_NAME, jarName.get());
+		assertThat(jarName.isPresent(), equalTo(Boolean.TRUE));
+		assertThat(jarName.get(), equalTo(DEFAULT_JAR_NAME));
 	}
 
 	@Test
 	public void resolveSystemAttributes() {
 		Set<ItemAttributesRQ> attributes = AgentUtil.resolveSystemAttributes(DEFAULT_JAR_NAME, AGENT_PROPERTIES_FILE);
-		Assert.assertNotNull(attributes);
-		Assert.assertEquals(3, attributes.size());
+		assertThat(attributes, notNullValue());
+		assertThat(attributes, hasSize(3));
 		attributes.forEach(attribute -> {
-			Assert.assertTrue(attribute.isSystem());
+			assertThat(attribute.isSystem(), equalTo(Boolean.TRUE));
 
 			Pattern pattern = getPattern(attribute);
-			Assert.assertNotNull(pattern);
-			Assert.assertTrue(pattern.matcher(attribute.getValue()).matches());
+			assertThat(pattern, notNullValue());
+			assertThat(attribute.getValue(), matchesPattern(pattern));
 		});
 	}
 

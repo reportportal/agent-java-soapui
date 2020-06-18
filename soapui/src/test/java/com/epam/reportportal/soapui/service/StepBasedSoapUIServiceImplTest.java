@@ -9,11 +9,9 @@ import com.eviware.soapui.model.propertyexpansion.PropertyExpansionContext;
 import com.eviware.soapui.model.testsuite.*;
 import io.reactivex.Maybe;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,13 +67,8 @@ public class StepBasedSoapUIServiceImplTest {
 	@Mock
 	private ListenerParameters listenerParameters;
 
-	@Before
-	public void init() {
-		MockitoAnnotations.initMocks(this);
-
-		when(listenerParameters.getBaseUrl()).thenReturn("http://example.com");
-		when(listenerParameters.getApiKey()).thenReturn("key");
-		when(listenerParameters.getProjectName()).thenReturn("project");
+	@Test
+	public void suiteCodeRefAndTestCaseIdWithoutPropertiesTest() {
 		when(listenerParameters.getLaunchName()).thenReturn("launch");
 		when(listenerParameters.getIoPoolSize()).thenReturn(5);
 
@@ -87,15 +80,6 @@ public class StepBasedSoapUIServiceImplTest {
 		when(testSuite.getName()).thenReturn(SUITE_NAME);
 		when(testSuite.getProject()).thenReturn(project);
 
-		when(testCase.getName()).thenReturn(TEST_CASE_NAME);
-		when(testCase.getTestSuite()).thenReturn(testSuite);
-
-		when(testStep.getName()).thenReturn(TEST_STEP_NAME);
-		when(testStep.getTestCase()).thenReturn(testCase);
-	}
-
-	@Test
-	public void suiteCodeRefAndTestCaseIdWithoutPropertiesTest() {
 		StepBasedSoapUIServiceImpl service = new StepBasedSoapUIServiceImpl(listenerParameters, new ArrayList<>()) {
 			@Override
 			protected ReportPortal buildReportPortal(ListenerParameters parameters) {
@@ -121,6 +105,17 @@ public class StepBasedSoapUIServiceImplTest {
 
 	@Test
 	public void suiteCodeRefAndTestCaseIdWithPropertiesTest() {
+		when(listenerParameters.getLaunchName()).thenReturn("launch");
+		when(listenerParameters.getIoPoolSize()).thenReturn(5);
+
+		when(reportPortalMock.newLaunch(any())).thenReturn(launch);
+		when(launch.start()).thenReturn(createIdMaybe("launch Id"));
+
+		when(project.getName()).thenReturn(PROJECT_NAME);
+
+		when(testSuite.getName()).thenReturn(SUITE_NAME);
+		when(testSuite.getProject()).thenReturn(project);
+
 		StepBasedSoapUIServiceImpl service = new StepBasedSoapUIServiceImpl(listenerParameters, new ArrayList<>()) {
 			@Override
 			protected ReportPortal buildReportPortal(ListenerParameters parameters) {
@@ -155,6 +150,20 @@ public class StepBasedSoapUIServiceImplTest {
 
 	@Test
 	public void testCaseCodeRefAndTestCaseIdWithoutPropertiesTest() {
+		when(listenerParameters.getLaunchName()).thenReturn("launch");
+		when(listenerParameters.getIoPoolSize()).thenReturn(5);
+
+		when(reportPortalMock.newLaunch(any())).thenReturn(launch);
+		when(launch.start()).thenReturn(createIdMaybe("launch Id"));
+
+		when(project.getName()).thenReturn(PROJECT_NAME);
+
+		when(testSuite.getName()).thenReturn(SUITE_NAME);
+		when(testSuite.getProject()).thenReturn(project);
+
+		when(testCase.getName()).thenReturn(TEST_CASE_NAME);
+		when(testCase.getTestSuite()).thenReturn(testSuite);
+
 		StepBasedSoapUIServiceImpl service = new StepBasedSoapUIServiceImpl(listenerParameters, new ArrayList<>()) {
 			@Override
 			protected ReportPortal buildReportPortal(ListenerParameters parameters) {
@@ -183,6 +192,20 @@ public class StepBasedSoapUIServiceImplTest {
 
 	@Test
 	public void testCaseCodeRefAndTestCaseIdWithPropertiesTest() {
+		when(listenerParameters.getLaunchName()).thenReturn("launch");
+		when(listenerParameters.getIoPoolSize()).thenReturn(5);
+
+		when(reportPortalMock.newLaunch(any())).thenReturn(launch);
+		when(launch.start()).thenReturn(createIdMaybe("launch Id"));
+
+		when(project.getName()).thenReturn(PROJECT_NAME);
+
+		when(testSuite.getName()).thenReturn(SUITE_NAME);
+		when(testSuite.getProject()).thenReturn(project);
+
+		when(testCase.getName()).thenReturn(TEST_CASE_NAME);
+		when(testCase.getTestSuite()).thenReturn(testSuite);
+
 		StepBasedSoapUIServiceImpl service = new StepBasedSoapUIServiceImpl(listenerParameters, new ArrayList<>()) {
 			@Override
 			protected ReportPortal buildReportPortal(ListenerParameters parameters) {
@@ -219,6 +242,23 @@ public class StepBasedSoapUIServiceImplTest {
 
 	@Test
 	public void testStepCodeRefAndTestCaseIdWithoutPropertiesTest() {
+		when(listenerParameters.getLaunchName()).thenReturn("launch");
+		when(listenerParameters.getIoPoolSize()).thenReturn(5);
+
+		when(reportPortalMock.newLaunch(any())).thenReturn(launch);
+		when(launch.start()).thenReturn(createIdMaybe("launch Id"));
+
+		when(project.getName()).thenReturn(PROJECT_NAME);
+
+		when(testSuite.getName()).thenReturn(SUITE_NAME);
+		when(testSuite.getProject()).thenReturn(project);
+
+		when(testCase.getName()).thenReturn(TEST_CASE_NAME);
+		when(testCase.getTestSuite()).thenReturn(testSuite);
+
+		when(testStep.getName()).thenReturn(TEST_STEP_NAME);
+		when(testStep.getTestCase()).thenReturn(testCase);
+
 		StepBasedSoapUIServiceImpl service = new StepBasedSoapUIServiceImpl(listenerParameters, new ArrayList<>()) {
 			@Override
 			protected ReportPortal buildReportPortal(ListenerParameters parameters) {
@@ -259,6 +299,23 @@ public class StepBasedSoapUIServiceImplTest {
 
 	@Test
 	public void testStepCodeRefAndTestCaseIdWithPropertiesTest() {
+		when(listenerParameters.getLaunchName()).thenReturn("launch");
+		when(listenerParameters.getIoPoolSize()).thenReturn(5);
+
+		when(reportPortalMock.newLaunch(any())).thenReturn(launch);
+		when(launch.start()).thenReturn(createIdMaybe("launch Id"));
+
+		when(project.getName()).thenReturn(PROJECT_NAME);
+
+		when(testSuite.getName()).thenReturn(SUITE_NAME);
+		when(testSuite.getProject()).thenReturn(project);
+
+		when(testCase.getName()).thenReturn(TEST_CASE_NAME);
+		when(testCase.getTestSuite()).thenReturn(testSuite);
+
+		when(testStep.getName()).thenReturn(TEST_STEP_NAME);
+		when(testStep.getTestCase()).thenReturn(testCase);
+
 		StepBasedSoapUIServiceImpl service = new StepBasedSoapUIServiceImpl(listenerParameters, new ArrayList<>()) {
 			@Override
 			protected ReportPortal buildReportPortal(ListenerParameters parameters) {

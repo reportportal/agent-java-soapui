@@ -15,9 +15,18 @@ dependencies {
 
     compileOnly 'log4j:log4j:1.2.17'
     compile 'com.smartbear.soapui:soapui:5.5.0'
-    testCompile 'org.hamcrest:hamcrest-all:1.3'
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-all:2.0.2-beta'
+    testImplementation 'org.junit.platform:junit-platform-launcher:1.6.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.6.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
+
+    testImplementation 'org.hamcrest:hamcrest-core:2.2'
+    testImplementation 'org.mockito:mockito-core:3.3.3'
+    testImplementation 'org.mockito:mockito-junit-jupiter:3.3.3'
+}
+
+test{
+    useJUnitPlatform()
 }
 
 shadowJar {
