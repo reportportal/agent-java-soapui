@@ -46,7 +46,6 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
 
     public static final Map<String, LoggingContext> CONTEXT_MAP = new ConcurrentHashMap<String, LoggingContext>();
     private static final String LEVEL_INFO = "INFO";
-    public static String TEST_CASE_ID;
 
     public TestBasedSoapUIServiceImpl(ListenerParameters parameters, List<ResultLogger<?>> resultLoggers) {
         super(parameters, resultLoggers);
@@ -57,25 +56,21 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
         Maybe<String> id = startItem(testCase, TestItemType.TEST_STEP, fromStringId(testCase.getTestSuite().getPropertyValue(ID)));
         testCase.setPropertyValue(ID, toStringId(id));
 
-        LoggingContext loggingContext = LoggingContext.init(launchId,
-                id,
-                reportPortal.getClient(),
-                Schedulers.from(executor)
-        );
-        CONTEXT_MAP.put(TEST_CASE_ID = testCase.getId(), loggingContext);
+        LoggingContext loggingContext = LoggingContext.init(launchId, id, reportPortal.getClient(), Schedulers.from(executor));
+        CONTEXT_MAP.put(testCase.getId(), loggingContext);
     }
 
     public void startTestStep(TestStep testStep, TestCaseRunContext context) {
         if (!RpServiceBuilder.REPORTER_DISABLE) {
             String log = asMarkdown(String.format("# ===========STEP '%s' STARTED===========", testStep.getName()));
 
-            LoggingContext loggingContext = CONTEXT_MAP.get(TEST_CASE_ID);
+            LoggingContext loggingContext = CONTEXT_MAP.get(getTestCaseId(context.getTestCase()));
             loggingContext.emit(asFunction(log, LEVEL_INFO, Calendar.getInstance().getTime()));
         }
     }
 
     public void finishTestStep(TestStepResult testStepContext, TestCaseRunContext paramTestCaseRunContext) {
-        LoggingContext loggingContext = CONTEXT_MAP.get(TEST_CASE_ID);
+        LoggingContext loggingContext = CONTEXT_MAP.get(getTestCaseId(paramTestCaseRunContext.getTestCase()));
 
         if (!RpServiceBuilder.REPORTER_DISABLE) {
             String logStepData = getLogStepData(testStepContext);
@@ -99,17 +94,14 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
         }
 
         if (!RpServiceBuilder.REPORTER_DISABLE) {
-            String log = asMarkdown(String.format("# ===========STEP '%s' %s===========",
-                    testStepContext.getTestStep().getName(),
-                    TestStatus.fromSoapUIStep(testStepContext.getStatus())
-            ));
+            String log = asMarkdown(String.format("# ===========STEP '%s' %s===========", testStepContext.getTestStep().getName(), TestStatus.fromSoapUIStep(testStepContext.getStatus())));
             loggingContext.emit(asFunction(log, LEVEL_INFO, Calendar.getInstance().getTime()));
         }
     }
 
     @Override
     public void finishTestCase(TestCaseRunner testCaseContext, PropertyExpansionContext propertyContext) {
-        CONTEXT_MAP.get(TEST_CASE_ID).completed().blockingAwait();
+        CONTEXT_MAP.get(getTestCaseId(testCaseContext.getTestCase())).completed().blockingAwait();
 
         super.finishTestCase(testCaseContext, propertyContext);
     }
@@ -126,8 +118,7 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
         };
     }
 
-    public static Function<String, SaveLogRQ> asFunctionFile(final String message, final SaveLogRQ.File file, final String level,
-                                                             final Date time) {
+    public static Function<String, SaveLogRQ> asFunctionFile(final String message, final SaveLogRQ.File file, final String level, final Date time) {
         return id -> {
             SaveLogRQ rq = new SaveLogRQ();
             rq.setLevel(level);
@@ -138,5 +129,9 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
 
             return rq;
         };
+    }
+
+    private String getTestCaseId(TestCase testCase) {
+        return testCase.getId();
     }
 }
