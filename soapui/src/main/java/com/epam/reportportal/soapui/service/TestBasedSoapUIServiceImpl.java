@@ -26,6 +26,7 @@ import com.eviware.soapui.model.propertyexpansion.PropertyExpansionContext;
 import com.eviware.soapui.model.testsuite.*;
 import io.reactivex.Maybe;
 import io.reactivex.schedulers.Schedulers;
+import org.apache.commons.lang.StringEscapeUtils;
 import rp.com.google.common.base.Strings;
 
 import java.util.Calendar;
@@ -75,7 +76,7 @@ public class TestBasedSoapUIServiceImpl extends StepBasedSoapUIServiceImpl imple
         if (!RpServiceBuilder.REPORTER_DISABLE) {
             String logStepData = getLogStepData(testStepContext);
             if (!Strings.isNullOrEmpty(logStepData)) {
-                loggingContext.emit(asFunction(logStepData, LEVEL_INFO, Calendar.getInstance().getTime()));
+                loggingContext.emit(asFunction(StringEscapeUtils.escapeHtml(logStepData), LEVEL_INFO, Calendar.getInstance().getTime()));
             }
             for (final SaveLogRQ rq : getStepLogReport(testStepContext)) {
                 loggingContext.emit((Function<String, SaveLogRQ>) id -> {
