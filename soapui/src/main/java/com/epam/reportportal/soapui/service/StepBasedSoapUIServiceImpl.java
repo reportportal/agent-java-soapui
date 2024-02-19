@@ -35,6 +35,7 @@ import com.eviware.soapui.model.testsuite.*;
 import com.eviware.soapui.model.testsuite.TestRunner.Status;
 import com.eviware.soapui.model.testsuite.TestStepResult.TestStepStatus;
 import io.reactivex.Maybe;
+import org.apache.commons.lang.StringEscapeUtils;
 import rp.com.google.common.base.StandardSystemProperty;
 import rp.com.google.common.base.Strings;
 
@@ -244,7 +245,7 @@ public class StepBasedSoapUIServiceImpl implements SoapUIService {
 
             String logStepData = getLogStepData(testStepContext);
             if (!Strings.isNullOrEmpty(logStepData)) {
-                ReportPortal.emitLog(logStepData, "INFO", Calendar.getInstance().getTime());
+                ReportPortal.emitLog(StringEscapeUtils.escapeHtml(logStepData), "INFO", Calendar.getInstance().getTime());
             }
             for (final SaveLogRQ rq : getStepLogReport(testStepContext)) {
                 ReportPortal.emitLog((Function<String, SaveLogRQ>) id -> {

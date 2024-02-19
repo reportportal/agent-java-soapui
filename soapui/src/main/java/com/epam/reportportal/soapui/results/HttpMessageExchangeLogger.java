@@ -18,7 +18,7 @@ package com.epam.reportportal.soapui.results;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import com.eviware.soapui.impl.wsdl.submit.HttpMessageExchange;
 import com.eviware.soapui.impl.wsdl.submit.transports.http.HttpResponse;
-import rp.com.google.common.base.Strings;
+import org.apache.commons.lang.StringEscapeUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,8 +38,8 @@ public class HttpMessageExchangeLogger extends ResultLogger<HttpMessageExchange>
     protected List<SaveLogRQ> prepareLogs(HttpMessageExchange result) {
         final HttpResponse testRS = (HttpResponse) result.getResponse();
         return Arrays.asList(
-                prepareEntity( "REQUEST", testRS.getRequestHeaders().toString(), testRS.getRequestContent()),
-                prepareEntity("RESPONSE", testRS.getResponseHeaders().toString(), testRS.getContentAsString()));
+                prepareEntity("REQUEST", testRS.getRequestHeaders().toString(), StringEscapeUtils.escapeHtml(testRS.getRequestContent())),
+                prepareEntity("RESPONSE", testRS.getResponseHeaders().toString(), StringEscapeUtils.escapeHtml(testRS.getContentAsString())));
     }
 
     private SaveLogRQ prepareEntity(String prefix, String headers, String body) {
